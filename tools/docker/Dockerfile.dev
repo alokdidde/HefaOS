@@ -1,0 +1,142 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Hefaos Development Container
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Multi-stage build for development environment with:
+# - C++ build tools (GCC, Clang, CMake, Ninja)
+# - Cross-compilation toolchain (aarch64-linux-gnu)
+# - Node.js and pnpm for TypeScript SDK
+# - Python for simulation
+# - Pre-built iceoryx
+#
+# Usage:
+#   docker build -f tools/docker/Dockerfile.dev -t hefaos-dev .
+#   docker run -it -v $(pwd):/workspace hefaos-dev
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+FROM ubuntu:24.04 AS base
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+# System packages
+RUN apt-get update && apt-get install -y \
+    # Build essentials
+    build-essential \
+    cmake \
+    ninja-build \
+    git \
+    curl \
+    wget \
+    pkg-config \
+    # Clang toolchain
+    clang-18 \
+    clang-format-18 \
+    clang-tidy-18 \
+    lldb-18 \
+    lld-18 \
+    # GCC (for comparison/fallback)
+    gcc-14 \
+    g++-14 \
+    gdb \
+    # Dependencies
+    libssl-dev \
+    libboost-all-dev \
+    libtbb-dev \
+    libfmt-dev \
+    libspdlog-dev \
+    libyaml-cpp-dev \
+    libgtest-dev \
+    libgmock-dev \
+    libarrow-dev \
+    libparquet-dev \
+    flatbuffers-compiler \
+    libflatbuffers-dev \
+    # Cross-compilation
+    gcc-aarch64-linux-gnu \
+    g++-aarch64-linux-gnu \
+    qemu-user-static \
+    # Python
+    python3.12 \
+    python3.12-venv \
+    python3-pip \
+    # Utilities
+    ca-certificates \
+    gnupg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set Clang as default compiler
+RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 100 && \
+    update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-18 100 && \
+    update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-18 100 && \
+    update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-18 100 && \
+    update-alternatives --install /usr/bin/cc cc /usr/bin/clang 100 && \
+    update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++ 100
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Build iceoryx
+# ─────────────────────────────────────────────────────────────────────────────
+
+FROM base AS iceoryx-builder
+
+WORKDIR /tmp
+RUN git clone https://github.com/eclipse-iceoryx/iceoryx.git --depth 1 --branch v2.0.5 && \
+    cd iceoryx && \
+    cmake -B build -G Ninja \
+        -DCMAKE_INSTALL_PREFIX=/opt/iceoryx \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_SHARED_LIBS=ON && \
+    cmake --build build --parallel && \
+    cmake --install build
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Final development image
+# ─────────────────────────────────────────────────────────────────────────────
+
+FROM base AS dev
+
+# Copy pre-built iceoryx
+COPY --from=iceoryx-builder /opt/iceoryx /opt/iceoryx
+ENV CMAKE_PREFIX_PATH="/opt/iceoryx:${CMAKE_PREFIX_PATH}"
+ENV LD_LIBRARY_PATH="/opt/iceoryx/lib:${LD_LIBRARY_PATH}"
+
+# Install Node.js 20 LTS
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install -g pnpm@9 turbo
+
+# Python packages for simulation
+RUN pip3 install --break-system-packages \
+    mujoco \
+    numpy \
+    scipy \
+    pytest \
+    pytest-asyncio \
+    black \
+    mypy \
+    ruff
+
+# Create non-root user
+ARG USERNAME=developer
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+RUN groupadd --gid $USER_GID $USERNAME && \
+    useradd --uid $USER_UID --gid $USER_GID -m $USERNAME && \
+    apt-get update && \
+    apt-get install -y sudo && \
+    echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME && \
+    chmod 0440 /etc/sudoers.d/$USERNAME && \
+    rm -rf /var/lib/apt/lists/*
+
+# Workspace setup
+WORKDIR /workspace
+ENV HEFAOS_DEV=1
+
+# Volume for build artifacts
+VOLUME ["/workspace/build", "/workspace/sdk/node_modules"]
+
+# Default user
+USER $USERNAME
+
+CMD ["/bin/bash"]

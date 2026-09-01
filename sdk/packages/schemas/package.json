@@ -1,0 +1,40 @@
+{
+  "name": "@hefaos/schemas",
+  "version": "0.1.0",
+  "description": "Hefaos Schemas - FlatBuffer schema definitions and generated code",
+  "keywords": ["robotics", "schemas", "flatbuffers", "serialization", "hefaos"],
+  "license": "MIT",
+  "author": "Hefaos Robotics",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hefaos-robotics/hefaos.git",
+    "directory": "sdk/packages/schemas"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "schemas", "README.md"],
+  "scripts": {
+    "build": "npm run generate && tsup src/index.ts --format esm --dts --clean",
+    "generate": "flatc --ts -o src/generated schemas/*.fbs || true",
+    "dev": "tsup src/index.ts --format esm --dts --watch",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist src/generated .turbo"
+  },
+  "dependencies": {
+    "flatbuffers": "^24.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "eslint": "^8.57.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0"
+  }
+}

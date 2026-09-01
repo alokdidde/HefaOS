@@ -1,0 +1,217 @@
+{
+  "folders": [
+    {
+      "name": "Hefaos Root",
+      "path": "."
+    },
+    {
+      "name": "Runtime (C++)",
+      "path": "runtime"
+    },
+    {
+      "name": "SDK (TypeScript)",
+      "path": "sdk"
+    },
+    {
+      "name": "Simulator",
+      "path": "simulator"
+    },
+    {
+      "name": "Documentation",
+      "path": "docs"
+    }
+  ],
+
+  "settings": {
+    "cmake.sourceDirectory": "${workspaceFolder:Runtime (C++)}",
+    "cmake.buildDirectory": "${workspaceFolder:Runtime (C++)}/build",
+    "cmake.generator": "Ninja",
+    "cmake.configureSettings": {
+      "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+      "BUILD_TESTING": "ON"
+    },
+
+    "clangd.arguments": [
+      "--compile-commands-dir=${workspaceFolder:Runtime (C++)}/build",
+      "--header-insertion=iwyu",
+      "--clang-tidy"
+    ],
+
+    "typescript.tsdk": "sdk/node_modules/typescript/lib",
+    "eslint.workingDirectories": [
+      { "directory": "sdk", "changeProcessCWD": true }
+    ],
+
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit",
+      "source.organizeImports": "explicit"
+    },
+
+    "[cpp]": {
+      "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+    },
+    "[c]": {
+      "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+    },
+    "[typescript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[yaml]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[python]": {
+      "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+
+    "files.associations": {
+      "*.fbs": "flatbuffers",
+      "*.tsx": "typescriptreact"
+    },
+
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/build": true,
+      "**/build-*": true,
+      "**/dist": true,
+      "**/.pnpm-store": true,
+      "**/models/*.onnx": true,
+      "**/models/*.gguf": true
+    },
+
+    "task.autoDetect": "off"
+  },
+
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Build Runtime (Debug)",
+        "type": "shell",
+        "command": "cmake --build build --parallel",
+        "options": {
+          "cwd": "${workspaceFolder:Runtime (C++)}"
+        },
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "problemMatcher": "$gcc"
+      },
+      {
+        "label": "Test Runtime",
+        "type": "shell",
+        "command": "ctest --test-dir build --output-on-failure",
+        "options": {
+          "cwd": "${workspaceFolder:Runtime (C++)}"
+        },
+        "group": "test",
+        "problemMatcher": "$gcc"
+      },
+      {
+        "label": "Build SDK",
+        "type": "shell",
+        "command": "pnpm build",
+        "options": {
+          "cwd": "${workspaceFolder:SDK (TypeScript)}"
+        },
+        "group": "build",
+        "problemMatcher": "$tsc"
+      },
+      {
+        "label": "Test SDK",
+        "type": "shell",
+        "command": "pnpm test",
+        "options": {
+          "cwd": "${workspaceFolder:SDK (TypeScript)}"
+        },
+        "group": "test"
+      },
+      {
+        "label": "Cross-compile for ARM64",
+        "type": "shell",
+        "command": "cmake -B build-arm -G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/aarch64-linux-gnu.cmake -DCMAKE_BUILD_TYPE=Release && cmake --build build-arm --parallel",
+        "options": {
+          "cwd": "${workspaceFolder:Runtime (C++)}"
+        },
+        "group": "build"
+      },
+      {
+        "label": "Configure Runtime (CMake)",
+        "type": "shell",
+        "command": "cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON",
+        "options": {
+          "cwd": "${workspaceFolder:Runtime (C++)}"
+        },
+        "group": "build"
+      },
+      {
+        "label": "Install SDK Dependencies",
+        "type": "shell",
+        "command": "pnpm install",
+        "options": {
+          "cwd": "${workspaceFolder:SDK (TypeScript)}"
+        }
+      }
+    ]
+  },
+
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Debug Unit Test",
+        "type": "lldb",
+        "request": "launch",
+        "program": "${workspaceFolder:Runtime (C++)}/build/core/tests/hefaos-core-tests",
+        "args": [],
+        "cwd": "${workspaceFolder:Runtime (C++)}"
+      },
+      {
+        "name": "Debug Simulation",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder:Simulator}/python/hefaos_sim/__main__.py",
+        "args": ["--robot", "../examples/simple-arm"],
+        "cwd": "${workspaceFolder:Simulator}"
+      },
+      {
+        "name": "Debug Compiler",
+        "type": "node",
+        "request": "launch",
+        "program": "${workspaceFolder:SDK (TypeScript)}/packages/compiler/src/index.ts",
+        "args": ["compile", "../../examples/simple-arm/robot.tsx"],
+        "cwd": "${workspaceFolder:SDK (TypeScript)}",
+        "runtimeArgs": ["--loader", "tsx"]
+      }
+    ]
+  },
+
+  "extensions": {
+    "recommendations": [
+      "ms-vscode-remote.remote-wsl",
+      "ms-vscode-remote.remote-containers",
+      "ms-vscode.cpptools-extension-pack",
+      "llvm-vs-code-extensions.vscode-clangd",
+      "twxs.cmake",
+      "ms-vscode.cmake-tools",
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "ms-python.python",
+      "ms-python.vscode-pylance",
+      "vadimcn.vscode-lldb",
+      "usernamehw.errorlens",
+      "eamodio.gitlens",
+      "EditorConfig.EditorConfig"
+    ]
+  }
+}

@@ -1,0 +1,111 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Hefaos .gitignore
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Build artifacts
+build/
+build-*/
+dist/
+out/
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+*.exe
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+*.cmake.in
+!cmake/
+
+# IDE and editor files
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+.project
+.cproject
+.settings/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Node.js / TypeScript
+node_modules/
+.pnpm-store/
+*.tsbuildinfo
+.turbo/
+.next/
+coverage/
+.nyc_output/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.egg-info/
+.eggs/
+*.egg
+.venv/
+venv/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Models - DO NOT COMMIT LARGE FILES
+models/*.onnx
+models/*.gguf
+models/*.tflite
+models/*.pt
+models/*.pth
+models/*.bin
+models/*.safetensors
+
+# OS-specific
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs and temp files
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+
+# Test artifacts
+test-results/
+*.gcov
+*.gcda
+*.gcno
+lcov.info
+
+# Secrets and local config
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+credentials.json
+secrets.yaml
+
+# Docker
+.docker/
+
+# Generated files
+generated/
+*.generated.*

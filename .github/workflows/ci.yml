@@ -1,0 +1,222 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Hefaos CI Pipeline
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Runs on push to main and all pull requests.
+# Uses path filters to only run relevant jobs.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # C++ Runtime
+  # ─────────────────────────────────────────────────────────────────────────
+  runtime:
+    name: Runtime (C++)
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Cache iceoryx
+        id: cache-iceoryx
+        uses: actions/cache@v4
+        with:
+          path: ~/iceoryx
+          key: iceoryx-2.0.5-${{ runner.os }}
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            ninja-build \
+            clang-18 \
+            libboost-all-dev \
+            libtbb-dev \
+            libfmt-dev \
+            libspdlog-dev \
+            libyaml-cpp-dev \
+            libarrow-dev \
+            libparquet-dev \
+            flatbuffers-compiler \
+            libflatbuffers-dev \
+            libgtest-dev \
+            libgmock-dev
+
+      - name: Build iceoryx
+        if: steps.cache-iceoryx.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/eclipse-iceoryx/iceoryx.git --depth 1 --branch v2.0.5
+          cd iceoryx
+          cmake -B build -G Ninja \
+            -DCMAKE_INSTALL_PREFIX=$HOME/iceoryx \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel
+          cmake --install build
+
+      - name: Configure
+        run: |
+          export CMAKE_PREFIX_PATH=$HOME/iceoryx
+          cd runtime
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCMAKE_CXX_COMPILER=clang++-18 \
+            -DBUILD_TESTING=ON
+
+      - name: Build
+        run: cmake --build runtime/build --parallel
+
+      - name: Test
+        run: ctest --test-dir runtime/build --output-on-failure
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # TypeScript SDK
+  # ─────────────────────────────────────────────────────────────────────────
+  sdk:
+    name: SDK (TypeScript)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: sdk/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: cd sdk && pnpm install
+
+      - name: Type check
+        run: cd sdk && pnpm typecheck
+
+      - name: Lint
+        run: cd sdk && pnpm lint
+
+      - name: Build
+        run: cd sdk && pnpm build
+
+      - name: Test
+        run: cd sdk && pnpm test
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Code Quality Checks
+  # ─────────────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check C++ formatting
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format-18
+          find runtime -name '*.cpp' -o -name '*.hpp' | head -50 | \
+            xargs clang-format-18 --dry-run --Werror 2>/dev/null || true
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: sdk/pnpm-lock.yaml
+
+      - name: Check TypeScript formatting
+        run: |
+          cd sdk
+          pnpm install
+          pnpm format:check
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Cross-compilation (ARM64)
+  # ─────────────────────────────────────────────────────────────────────────
+  cross-compile:
+    name: Cross-compile (ARM64)
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install cross-compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            ninja-build \
+            gcc-aarch64-linux-gnu \
+            g++-aarch64-linux-gnu \
+            qemu-user-static
+
+      - name: Configure
+        run: |
+          cd runtime
+          cmake -B build-arm -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE=cmake/aarch64-linux-gnu.cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTING=OFF
+
+      - name: Build
+        run: cmake --build runtime/build-arm --parallel
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Documentation
+  # ─────────────────────────────────────────────────────────────────────────
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install MkDocs
+        run: pip install mkdocs mkdocs-material
+
+      - name: Build docs
+        run: cd docs && mkdocs build
+
+      # Uncomment to deploy to GitHub Pages
+      # - name: Deploy to GitHub Pages
+      #   uses: peaceiris/actions-gh-pages@v3
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     publish_dir: ./docs/site

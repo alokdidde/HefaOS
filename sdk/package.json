@@ -1,0 +1,38 @@
+{
+  "name": "hefaos-sdk-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hefaos SDK Monorepo",
+  "keywords": ["robotics", "sdk", "typescript", "react"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hefaos-robotics/hefaos.git",
+    "directory": "sdk"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "clean": "turbo run clean && rm -rf node_modules .turbo",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "turbo run build && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.0",
+    "@types/node": "^20.11.0",
+    "prettier": "^3.2.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.0"
+  }
+}

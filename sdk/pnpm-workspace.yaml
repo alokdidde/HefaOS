@@ -1,0 +1,8 @@
+# pnpm workspace configuration
+# https://pnpm.io/workspaces
+
+packages:
+  # SDK packages
+  - "packages/*"
+  # Applications (playground, dashboard)
+  - "apps/*"

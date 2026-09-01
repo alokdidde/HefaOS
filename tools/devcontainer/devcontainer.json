@@ -1,0 +1,85 @@
+{
+  "name": "Hefaos Dev",
+  "build": {
+    "dockerfile": "../docker/Dockerfile.dev",
+    "context": "../..",
+    "args": {
+      "USERNAME": "developer",
+      "USER_UID": "1000",
+      "USER_GID": "1000"
+    }
+  },
+
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools-extension-pack",
+        "twxs.cmake",
+        "ms-vscode.cmake-tools",
+        "llvm-vs-code-extensions.vscode-clangd",
+        "vadimcn.vscode-lldb",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "usernamehw.errorlens",
+        "eamodio.gitlens",
+        "EditorConfig.EditorConfig"
+      ],
+      "settings": {
+        "cmake.configureOnOpen": true,
+        "cmake.generator": "Ninja",
+        "cmake.sourceDirectory": "${workspaceFolder}/runtime",
+        "cmake.buildDirectory": "${workspaceFolder}/runtime/build",
+        "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+        "clangd.path": "/usr/bin/clangd-18",
+        "clangd.arguments": [
+          "--compile-commands-dir=${workspaceFolder}/runtime/build",
+          "--header-insertion=iwyu",
+          "--clang-tidy"
+        ],
+        "editor.formatOnSave": true,
+        "[cpp]": {
+          "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+        },
+        "[typescript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[typescriptreact]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[python]": {
+          "editor.defaultFormatter": "ms-python.black-formatter"
+        },
+        "python.defaultInterpreterPath": "/usr/bin/python3"
+      }
+    }
+  },
+
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+    "source=hefaos-build-cache,target=/workspace/runtime/build,type=volume",
+    "source=hefaos-pnpm-store,target=/home/developer/.local/share/pnpm,type=volume"
+  ],
+
+  "runArgs": [
+    "--cap-add=SYS_PTRACE",
+    "--security-opt", "seccomp=unconfined"
+  ],
+
+  "postCreateCommand": "bash -c 'cd /workspace/runtime && cmake -B build -G Ninja && cd /workspace/sdk && pnpm install'",
+
+  "remoteUser": "developer",
+  "workspaceFolder": "/workspace"
+}
