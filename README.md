@@ -1,6 +1,6 @@
 # HefaOS
 
-**Hardware-Efficient Framework for Autonomous Operating Systems**
+**An open stack for building real robots.**
 
 A modern robotics framework combining real-time C++ performance with TypeScript developer experience.
 
