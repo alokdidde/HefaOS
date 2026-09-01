@@ -14,11 +14,87 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 env:
   BUILD_TYPE: Release
 
 jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # Rust verification test bench (dependency-free mock plant)
+  # ─────────────────────────────────────────────────────────────────────────
+  testbench:
+    name: Verification test bench (Rust)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pinned Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: 1.95.0
+          components: rustfmt, clippy
+
+      - name: Check formatting
+        run: cargo fmt --all --check
+
+      - name: Test contracts, harness, corpus, replay, and goldens
+        run: cargo test --workspace --all-targets --locked
+
+      - name: Retain and replay the frozen Copper corpus
+        run: |
+          set -euo pipefail
+          evidence_dir="$(mktemp -d)"
+          HEFAOS_COPPER_EVIDENCE_DIR="$evidence_dir" \
+            cargo run --locked -p hefaos-copper-spike -- evidence run-all
+          HEFAOS_COPPER_EVIDENCE_DIR="$evidence_dir" \
+            cargo run --locked -p hefaos-copper-spike -- evidence replay-all
+
+      - name: Lint test bench
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+  # MuJoCo assets and native runtime are intentionally opt-in. A manual run
+  # checks every execution-file digest before compiling the feature.
+  testbench-mujoco:
+    name: Verification test bench (pinned MuJoCo)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pinned Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: 1.95.0
+          components: clippy
+
+      - name: Verify pinned model and native adapter
+        run: ./testbench/tools/with-mujoco.sh
+
+      - name: Lint the opt-in MuJoCo boundary
+        run: |
+          ./testbench/tools/with-mujoco.sh \
+            cargo clippy --locked -p hefaos-testbench-so101 \
+            --all-targets --features mujoco -- -D warnings
+          ./testbench/tools/with-mujoco.sh \
+            cargo clippy --locked -p hefaos-testbench-cli \
+            --all-targets --features mujoco -- -D warnings
+
+      - name: Run and captured-input replay the physics corpus
+        run: |
+          ./testbench/tools/with-mujoco.sh bash -c '
+            set -euo pipefail
+            cargo build --locked --quiet -p hefaos-testbench-cli --features mujoco
+            for scenario in testbench/scenarios/v0/*.scenario.json; do
+              target/debug/hefaos-testbench run "$scenario" --plant mujoco >/dev/null
+              target/debug/hefaos-testbench replay "$scenario" --plant mujoco >/dev/null
+            done
+          '
+
   # ─────────────────────────────────────────────────────────────────────────
   # C++ Runtime
   # ─────────────────────────────────────────────────────────────────────────

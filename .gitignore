@@ -5,6 +5,7 @@
 # Build artifacts
 build/
 build-*/
+target/
 dist/
 out/
 *.o
@@ -86,6 +87,7 @@ logs/
 tmp/
 temp/
 *.tmp
+testbench/.cache/
 
 # Test artifacts
 test-results/

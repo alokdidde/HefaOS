@@ -1,0 +1,44 @@
+[workspace]
+members = [
+  "testbench/contracts",
+  "testbench/harness",
+  "testbench/reference-subject",
+  "testbench/so101",
+  "testbench/cli",
+  "testbench/copper-spike",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+license = "MIT"
+repository = "https://github.com/alokdidde/HefaOS"
+
+[workspace.dependencies]
+anyhow = "1.0"
+bincode = { package = "cu-bincode", version = "=2.0.2", default-features = false, features = ["alloc", "derive"] }
+bevy_reflect = "=0.19.1"
+clap = { version = "4.5", features = ["derive"] }
+hefaos-testbench-contracts = { path = "testbench/contracts" }
+hefaos-testbench-harness = { path = "testbench/harness" }
+hefaos-testbench-reference = { path = "testbench/reference-subject" }
+hefaos-testbench-so101 = { path = "testbench/so101" }
+hefaos-copper-spike = { path = "testbench/copper-spike" }
+cu29 = { git = "https://github.com/copper-project/copper-rs", rev = "fc2ebc4fe3583d1f433b75898ad7c9e4dd9e6af2", version = "1.1.1" }
+cu29-build = { git = "https://github.com/copper-project/copper-rs", rev = "fc2ebc4fe3583d1f433b75898ad7c9e4dd9e6af2", version = "1.1.1" }
+cu29-export = { git = "https://github.com/copper-project/copper-rs", rev = "fc2ebc4fe3583d1f433b75898ad7c9e4dd9e6af2", version = "1.1.1" }
+cu29-unifiedlog = { git = "https://github.com/copper-project/copper-rs", rev = "fc2ebc4fe3583d1f433b75898ad7c9e4dd9e6af2", version = "1.1.1" }
+mujoco-rs = { version = "=5.0.0", default-features = false }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10"
+thiserror = "2.0"
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }

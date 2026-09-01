@@ -1,0 +1,85 @@
+format_version = 1
+
+[source]
+repository = "https://github.com/google-deepmind/mujoco_menagerie.git"
+commit = "da76818e269b82289eba39808e2fb91d679d6994"
+directory = "robotstudio_so101"
+directory_git_tree_sha1 = "76a095b3fec789ca460f4b8ceca66d11ba96040c"
+assets_git_tree_sha1 = "84016f65b56445f3486c4ec8ef882fc59148e9f8"
+asset_file_count = 19
+asset_bytes = 18151396
+
+[files]
+scene = "scene.xml"
+scene_sha256 = "d3037f0fd36b61a9b6805b2c79831e7a392276d0f490145d01f718542eee9150"
+model = "so101.xml"
+model_sha256 = "5ad49f2b45c083baac9ffe5d4d3213a5da7eac8039095bb2df177a697aae8308"
+license = "LICENSE"
+license_sha256 = "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+execution_manifest = "execution-files.sha256"
+execution_manifest_sha256 = "b6cdb20590fe06f2a98e3ca6618256892235abac0fb7dc432798ff12da9aa84e"
+execution_file_count = 21
+
+[engine]
+mujoco_version = "3.9.0"
+mujoco_rs_version = "5.0.0+mj-3.9.0"
+timestep_seconds = 0.005
+angle_unit = "radian"
+
+[license]
+spdx = "Apache-2.0"
+reference = "https://github.com/google-deepmind/mujoco_menagerie/blob/da76818e269b82289eba39808e2fb91d679d6994/robotstudio_so101/LICENSE"
+
+[[joint]]
+id = 0
+name = "shoulder_pan"
+qpos_index = 0
+dof_index = 0
+actuator_index = 0
+joint_range_radians = [-1.91986, 1.91986]
+control_range_radians = [-1.91986, 1.91986]
+
+[[joint]]
+id = 1
+name = "shoulder_lift"
+qpos_index = 1
+dof_index = 1
+actuator_index = 1
+joint_range_radians = [-1.7453293, 1.7453293]
+control_range_radians = [-1.74533, 1.74533]
+
+[[joint]]
+id = 2
+name = "elbow_flex"
+qpos_index = 2
+dof_index = 2
+actuator_index = 2
+joint_range_radians = [-1.69, 1.69]
+control_range_radians = [-1.69, 1.69]
+
+[[joint]]
+id = 3
+name = "wrist_flex"
+qpos_index = 3
+dof_index = 3
+actuator_index = 3
+joint_range_radians = [-1.658063, 1.658063]
+control_range_radians = [-1.65806, 1.65806]
+
+[[joint]]
+id = 4
+name = "wrist_roll"
+qpos_index = 4
+dof_index = 4
+actuator_index = 4
+joint_range_radians = [-2.7438473, 2.7438473]
+control_range_radians = [-2.74385, 2.84121]
+
+[[joint]]
+id = 5
+name = "gripper"
+qpos_index = 5
+dof_index = 5
+actuator_index = 5
+joint_range_radians = [-0.174533, 1.7453292]
+control_range_radians = [-0.17453, 1.74533]

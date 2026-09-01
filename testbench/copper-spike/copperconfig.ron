@@ -1,0 +1,20 @@
+(
+    runtime: (rate_target_hz: 200),
+    logging: (keyframe_interval: 1),
+    resources: [
+        (id: "run", provider: "crate::resources::RunBundle"),
+    ],
+    tasks: [
+        (id: "source", type: "tasks::InjectedSource", run_in_sim: false),
+        (
+            id: "controller",
+            type: "tasks::SemanticController",
+            resources: { "counter": "run.counter" },
+        ),
+        (id: "sink", type: "tasks::RecordingSink", run_in_sim: true),
+    ],
+    cnx: [
+        (src: "source", dst: "controller", msg: "tasks::WireTurn"),
+        (src: "controller", dst: "sink", msg: "tasks::WireOutput"),
+    ],
+)

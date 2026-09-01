@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "contract": "so101-bench/v0",
+  "profile": "joint-position-loop/v0",
+  "name": "duplicate-sensor-frame",
+  "modelDigest": "sha256:5ad49f2b45c083baac9ffe5d4d3213a5da7eac8039095bb2df177a697aae8308",
+  "clockEpoch": "1",
+  "sensorSourceEpoch": "11",
+  "setpointSourceEpoch": "20",
+  "subjectSourceEpoch": "21",
+  "safetySourceEpoch": "31",
+  "tickPeriodNs": "5000000",
+  "ticks": "7",
+  "seed": "0",
+  "initialState": {
+    "armPositionRad": [0.0, 0.0, 0.0, 0.0, 0.0],
+    "armVelocityRadS": [0.0, 0.0, 0.0, 0.0, 0.0],
+    "gripperPosition": 0.0,
+    "gripperVelocityPerS": 0.0
+  },
+  "setpoints": [
+    {
+      "atTick": "0",
+      "command": {
+        "armPositionRad": [0.2, -0.15, 0.1, -0.05, 0.12],
+        "gripperPosition": 0.3
+      }
+    }
+  ],
+  "safetyActions": [
+    { "atTick": "0", "action": { "action": "reset" } },
+    { "atTick": "1", "action": { "action": "arm" } }
+  ],
+  "faults": [
+    {
+      "startTick": "3",
+      "durationTicks": "1",
+      "fault": { "kind": "duplicate_sensor" }
+    }
+  ],
+  "gatePolicy": {
+    "sensorMaxAgeNs": "10000000",
+    "safetyMaxAgeNs": "10000000",
+    "setpointMaxAgeNs": "10000000",
+    "proposalTtlNs": "10000000",
+    "maxArmStepRad": [0.05, 0.05, 0.05, 0.05, 0.05],
+    "maxGripperStep": 0.05,
+    "limits": {
+      "armPositionRad": [[-1.91986, 1.91986], [-1.7453293, 1.7453293], [-1.69, 1.69], [-1.658063, 1.658063], [-2.7438473, 2.7438473]],
+      "gripperPosition": [0.0, 1.0]
+    }
+  },
+  "safetyPolicy": {
+    "intentMaxAgeNs": "10000000",
+    "heartbeatTimeoutNs": "20000000",
+    "maxArmStepRad": [0.05, 0.05, 0.05, 0.05, 0.05],
+    "maxGripperStep": 0.05,
+    "limits": {
+      "armPositionRad": [[-1.91986, 1.91986], [-1.7453293, 1.7453293], [-1.69, 1.69], [-1.658063, 1.658063], [-2.7438473, 2.7438473]],
+      "gripperPosition": [0.0, 1.0]
+    }
+  },
+  "mockPlantPolicy": {
+    "maxArmVelocityRadS": [10.0, 10.0, 10.0, 10.0, 10.0],
+    "maxGripperVelocityPerS": 10.0
+  },
+  "equality": {
+    "controlAbsoluteTolerance": 1e-9,
+    "physicsAbsoluteTolerance": 1e-6,
+    "requireExactDiscreteTrace": true,
+    "requireBitExactMockTrace": true
+  },
+  "expected": {
+    "admittedTicks": 5,
+    "deniedByReason": { "duplicate_sensor": 1, "safety_not_armed": 1 },
+    "authorizedTicks": 4,
+    "suppressedTicks": ["0", "1", "3"],
+    "terminalSafetyState": "armed",
+    "finalState": null
+  }
+}

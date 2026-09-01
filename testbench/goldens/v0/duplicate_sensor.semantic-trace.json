@@ -1,0 +1,1455 @@
+{
+  "schemaVersion": 1,
+  "contract": "so101-bench/v0",
+  "profile": "joint-position-loop/v0",
+  "scenarioName": "duplicate-sensor-frame",
+  "scenarioSha256": "dfd789b2a8c32b53f2d1b1f7b296154b8ea242f5769039f03562e79b90d4c624",
+  "modelDigest": "sha256:5ad49f2b45c083baac9ffe5d4d3213a5da7eac8039095bb2df177a697aae8308",
+  "seed": "0",
+  "tickPeriodNs": "5000000",
+  "expectedTicks": "7",
+  "subjectConfig": {
+    "schemaVersion": 1,
+    "contract": "so101-bench/v0",
+    "profile": "joint-position-loop/v0",
+    "clockEpoch": "1",
+    "sensorSourceEpoch": "11",
+    "setpointSourceEpoch": "20",
+    "subjectSourceEpoch": "21",
+    "safetySourceEpoch": "31",
+    "tickPeriodNs": "5000000",
+    "initialState": {
+      "armPositionRad": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "armVelocityRadS": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gripperPosition": 0.0,
+      "gripperVelocityPerS": 0.0
+    },
+    "gatePolicy": {
+      "sensorMaxAgeNs": "10000000",
+      "safetyMaxAgeNs": "10000000",
+      "setpointMaxAgeNs": "10000000",
+      "proposalTtlNs": "10000000",
+      "maxArmStepRad": [
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.05
+      ],
+      "maxGripperStep": 0.05,
+      "limits": {
+        "armPositionRad": [
+          [
+            -1.91986,
+            1.91986
+          ],
+          [
+            -1.7453293,
+            1.7453293
+          ],
+          [
+            -1.69,
+            1.69
+          ],
+          [
+            -1.658063,
+            1.658063
+          ],
+          [
+            -2.7438473,
+            2.7438473
+          ]
+        ],
+        "gripperPosition": [
+          0.0,
+          1.0
+        ]
+      }
+    }
+  },
+  "safetyPolicy": {
+    "intentMaxAgeNs": "10000000",
+    "heartbeatTimeoutNs": "20000000",
+    "maxArmStepRad": [
+      0.05,
+      0.05,
+      0.05,
+      0.05,
+      0.05
+    ],
+    "maxGripperStep": 0.05,
+    "limits": {
+      "armPositionRad": [
+        [
+          -1.91986,
+          1.91986
+        ],
+        [
+          -1.7453293,
+          1.7453293
+        ],
+        [
+          -1.69,
+          1.69
+        ],
+        [
+          -1.658063,
+          1.658063
+        ],
+        [
+          -2.7438473,
+          2.7438473
+        ]
+      ],
+      "gripperPosition": [
+        0.0,
+        1.0
+      ]
+    }
+  },
+  "subjectId": "reference-subject/v0",
+  "plantId": "so101-mock",
+  "equality": {
+    "controlAbsoluteTolerance": 1e-9,
+    "physicsAbsoluteTolerance": 1e-6,
+    "requireExactDiscreteTrace": true,
+    "requireBitExactMockTrace": true
+  },
+  "records": [
+    {
+      "tick": "0",
+      "timeNs": "0",
+      "safetyActions": [
+        {
+          "action": "reset"
+        }
+      ],
+      "activeFaults": [],
+      "safetyObservation": {
+        "armPositionRad": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "armVelocityRadS": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "gripperPosition": 0.0,
+        "gripperVelocityPerS": 0.0
+      },
+      "subjectInput": {
+        "tick": "0",
+        "timeNs": "0",
+        "setpoint": {
+          "clockEpoch": "1",
+          "sourceEpoch": "20",
+          "sequence": "0",
+          "capturedAtNs": "0",
+          "validUntilNs": "10000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "armPositionRad": [
+              0.2,
+              -0.15,
+              0.1,
+              -0.05,
+              0.12
+            ],
+            "gripperPosition": 0.3
+          }
+        },
+        "sensor": {
+          "clockEpoch": "1",
+          "sourceEpoch": "11",
+          "sequence": "0",
+          "capturedAtNs": "0",
+          "validUntilNs": "5000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "armPositionRad": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "armVelocityRadS": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "gripperPosition": 0.0,
+            "gripperVelocityPerS": 0.0
+          }
+        },
+        "safetyStatus": {
+          "clockEpoch": "1",
+          "sourceEpoch": "31",
+          "sequence": "0",
+          "capturedAtNs": "0",
+          "validUntilNs": "5000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "controllerState": {
+              "state": "disarmed"
+            },
+            "interlocksClear": true
+          }
+        },
+        "proposalFault": null
+      },
+      "subjectOutput": {
+        "lifecycle": {
+          "state": "running"
+        },
+        "estimate": {
+          "armPositionRad": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "armVelocityRadS": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gripperPosition": 0.0,
+          "gripperVelocityPerS": 0.0
+        },
+        "control": {
+          "clockEpoch": "1",
+          "sourceEpoch": "21",
+          "sequence": "0",
+          "sourceSensorEpoch": "11",
+          "sourceSensorSequence": "0",
+          "capturedAtNs": "0",
+          "validUntilNs": "5000000",
+          "command": {
+            "armPositionRad": [
+              0.2,
+              -0.15,
+              0.1,
+              -0.05,
+              0.12
+            ],
+            "gripperPosition": 0.3
+          }
+        },
+        "gate": {
+          "decision": "denied",
+          "reason": "safety_not_armed"
+        }
+      },
+      "safetyDisposition": {
+        "disposition": "suppressed",
+        "reason": "disarmed"
+      },
+      "safetyControllerAfter": {
+        "controllerState": {
+          "state": "disarmed"
+        },
+        "interlocksClear": true
+      },
+      "plantStateAfter": {
+        "armPositionRad": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "armVelocityRadS": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "gripperPosition": 0.0,
+        "gripperVelocityPerS": 0.0
+      }
+    },
+    {
+      "tick": "1",
+      "timeNs": "5000000",
+      "safetyActions": [
+        {
+          "action": "arm"
+        }
+      ],
+      "activeFaults": [],
+      "safetyObservation": {
+        "armPositionRad": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "armVelocityRadS": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "gripperPosition": 0.0,
+        "gripperVelocityPerS": 0.0
+      },
+      "subjectInput": {
+        "tick": "1",
+        "timeNs": "5000000",
+        "setpoint": {
+          "clockEpoch": "1",
+          "sourceEpoch": "20",
+          "sequence": "1",
+          "capturedAtNs": "5000000",
+          "validUntilNs": "15000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "armPositionRad": [
+              0.2,
+              -0.15,
+              0.1,
+              -0.05,
+              0.12
+            ],
+            "gripperPosition": 0.3
+          }
+        },
+        "sensor": {
+          "clockEpoch": "1",
+          "sourceEpoch": "11",
+          "sequence": "1",
+          "capturedAtNs": "5000000",
+          "validUntilNs": "10000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "armPositionRad": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "armVelocityRadS": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "gripperPosition": 0.0,
+            "gripperVelocityPerS": 0.0
+          }
+        },
+        "safetyStatus": {
+          "clockEpoch": "1",
+          "sourceEpoch": "31",
+          "sequence": "1",
+          "capturedAtNs": "5000000",
+          "validUntilNs": "10000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "controllerState": {
+              "state": "armed",
+              "permit_epoch": "1"
+            },
+            "interlocksClear": true
+          }
+        },
+        "proposalFault": null
+      },
+      "subjectOutput": {
+        "lifecycle": {
+          "state": "running"
+        },
+        "estimate": {
+          "armPositionRad": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "armVelocityRadS": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gripperPosition": 0.0,
+          "gripperVelocityPerS": 0.0
+        },
+        "control": {
+          "clockEpoch": "1",
+          "sourceEpoch": "21",
+          "sequence": "1",
+          "sourceSensorEpoch": "11",
+          "sourceSensorSequence": "1",
+          "capturedAtNs": "5000000",
+          "validUntilNs": "10000000",
+          "command": {
+            "armPositionRad": [
+              0.2,
+              -0.15,
+              0.1,
+              -0.05,
+              0.12
+            ],
+            "gripperPosition": 0.3
+          }
+        },
+        "gate": {
+          "decision": "admitted",
+          "intent": {
+            "clockEpoch": "1",
+            "sourceEpoch": "21",
+            "sequence": "1",
+            "permitEpoch": "1",
+            "capturedAtNs": "5000000",
+            "validUntilNs": "10000000",
+            "command": {
+              "armPositionRad": [
+                0.05,
+                -0.05,
+                0.05,
+                -0.05,
+                0.05
+              ],
+              "gripperPosition": 0.05
+            }
+          },
+          "limited": true
+        }
+      },
+      "safetyDisposition": {
+        "disposition": "suppressed",
+        "reason": "arm_transition"
+      },
+      "safetyControllerAfter": {
+        "controllerState": {
+          "state": "armed",
+          "permit_epoch": "1"
+        },
+        "interlocksClear": true
+      },
+      "plantStateAfter": {
+        "armPositionRad": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "armVelocityRadS": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "gripperPosition": 0.0,
+        "gripperVelocityPerS": 0.0
+      }
+    },
+    {
+      "tick": "2",
+      "timeNs": "10000000",
+      "safetyActions": [],
+      "activeFaults": [],
+      "safetyObservation": {
+        "armPositionRad": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "armVelocityRadS": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "gripperPosition": 0.0,
+        "gripperVelocityPerS": 0.0
+      },
+      "subjectInput": {
+        "tick": "2",
+        "timeNs": "10000000",
+        "setpoint": {
+          "clockEpoch": "1",
+          "sourceEpoch": "20",
+          "sequence": "2",
+          "capturedAtNs": "10000000",
+          "validUntilNs": "20000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "armPositionRad": [
+              0.2,
+              -0.15,
+              0.1,
+              -0.05,
+              0.12
+            ],
+            "gripperPosition": 0.3
+          }
+        },
+        "sensor": {
+          "clockEpoch": "1",
+          "sourceEpoch": "11",
+          "sequence": "2",
+          "capturedAtNs": "10000000",
+          "validUntilNs": "15000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "armPositionRad": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "armVelocityRadS": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "gripperPosition": 0.0,
+            "gripperVelocityPerS": 0.0
+          }
+        },
+        "safetyStatus": {
+          "clockEpoch": "1",
+          "sourceEpoch": "31",
+          "sequence": "2",
+          "capturedAtNs": "10000000",
+          "validUntilNs": "15000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "controllerState": {
+              "state": "armed",
+              "permit_epoch": "1"
+            },
+            "interlocksClear": true
+          }
+        },
+        "proposalFault": null
+      },
+      "subjectOutput": {
+        "lifecycle": {
+          "state": "running"
+        },
+        "estimate": {
+          "armPositionRad": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "armVelocityRadS": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gripperPosition": 0.0,
+          "gripperVelocityPerS": 0.0
+        },
+        "control": {
+          "clockEpoch": "1",
+          "sourceEpoch": "21",
+          "sequence": "2",
+          "sourceSensorEpoch": "11",
+          "sourceSensorSequence": "2",
+          "capturedAtNs": "10000000",
+          "validUntilNs": "15000000",
+          "command": {
+            "armPositionRad": [
+              0.2,
+              -0.15,
+              0.1,
+              -0.05,
+              0.12
+            ],
+            "gripperPosition": 0.3
+          }
+        },
+        "gate": {
+          "decision": "admitted",
+          "intent": {
+            "clockEpoch": "1",
+            "sourceEpoch": "21",
+            "sequence": "2",
+            "permitEpoch": "1",
+            "capturedAtNs": "10000000",
+            "validUntilNs": "15000000",
+            "command": {
+              "armPositionRad": [
+                0.05,
+                -0.05,
+                0.05,
+                -0.05,
+                0.05
+              ],
+              "gripperPosition": 0.05
+            }
+          },
+          "limited": true
+        }
+      },
+      "safetyDisposition": {
+        "disposition": "authorized",
+        "actuation": {
+          "tick": "2",
+          "timeNs": "10000000",
+          "permitEpoch": "1",
+          "intentSequence": "2",
+          "command": {
+            "armPositionRad": [
+              0.05,
+              -0.05,
+              0.05,
+              -0.05,
+              0.05
+            ],
+            "gripperPosition": 0.05
+          }
+        }
+      },
+      "safetyControllerAfter": {
+        "controllerState": {
+          "state": "armed",
+          "permit_epoch": "1"
+        },
+        "interlocksClear": true
+      },
+      "plantStateAfter": {
+        "armPositionRad": [
+          0.05,
+          -0.05,
+          0.05,
+          -0.05,
+          0.05
+        ],
+        "armVelocityRadS": [
+          10.0,
+          -10.0,
+          10.0,
+          -10.0,
+          10.0
+        ],
+        "gripperPosition": 0.05,
+        "gripperVelocityPerS": 10.0
+      }
+    },
+    {
+      "tick": "3",
+      "timeNs": "15000000",
+      "safetyActions": [],
+      "activeFaults": [
+        {
+          "kind": "duplicate_sensor"
+        }
+      ],
+      "safetyObservation": {
+        "armPositionRad": [
+          0.05,
+          -0.05,
+          0.05,
+          -0.05,
+          0.05
+        ],
+        "armVelocityRadS": [
+          10.0,
+          -10.0,
+          10.0,
+          -10.0,
+          10.0
+        ],
+        "gripperPosition": 0.05,
+        "gripperVelocityPerS": 10.0
+      },
+      "subjectInput": {
+        "tick": "3",
+        "timeNs": "15000000",
+        "setpoint": {
+          "clockEpoch": "1",
+          "sourceEpoch": "20",
+          "sequence": "3",
+          "capturedAtNs": "15000000",
+          "validUntilNs": "25000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "armPositionRad": [
+              0.2,
+              -0.15,
+              0.1,
+              -0.05,
+              0.12
+            ],
+            "gripperPosition": 0.3
+          }
+        },
+        "sensor": {
+          "clockEpoch": "1",
+          "sourceEpoch": "11",
+          "sequence": "2",
+          "capturedAtNs": "15000000",
+          "validUntilNs": "20000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "armPositionRad": [
+              0.05,
+              -0.05,
+              0.05,
+              -0.05,
+              0.05
+            ],
+            "armVelocityRadS": [
+              10.0,
+              -10.0,
+              10.0,
+              -10.0,
+              10.0
+            ],
+            "gripperPosition": 0.05,
+            "gripperVelocityPerS": 10.0
+          }
+        },
+        "safetyStatus": {
+          "clockEpoch": "1",
+          "sourceEpoch": "31",
+          "sequence": "3",
+          "capturedAtNs": "15000000",
+          "validUntilNs": "20000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "controllerState": {
+              "state": "armed",
+              "permit_epoch": "1"
+            },
+            "interlocksClear": true
+          }
+        },
+        "proposalFault": null
+      },
+      "subjectOutput": {
+        "lifecycle": {
+          "state": "running"
+        },
+        "estimate": null,
+        "control": null,
+        "gate": {
+          "decision": "denied",
+          "reason": "duplicate_sensor"
+        }
+      },
+      "safetyDisposition": {
+        "disposition": "suppressed",
+        "reason": "missing_intent"
+      },
+      "safetyControllerAfter": {
+        "controllerState": {
+          "state": "armed",
+          "permit_epoch": "1"
+        },
+        "interlocksClear": true
+      },
+      "plantStateAfter": {
+        "armPositionRad": [
+          0.05,
+          -0.05,
+          0.05,
+          -0.05,
+          0.05
+        ],
+        "armVelocityRadS": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "gripperPosition": 0.05,
+        "gripperVelocityPerS": 0.0
+      }
+    },
+    {
+      "tick": "4",
+      "timeNs": "20000000",
+      "safetyActions": [],
+      "activeFaults": [],
+      "safetyObservation": {
+        "armPositionRad": [
+          0.05,
+          -0.05,
+          0.05,
+          -0.05,
+          0.05
+        ],
+        "armVelocityRadS": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "gripperPosition": 0.05,
+        "gripperVelocityPerS": 0.0
+      },
+      "subjectInput": {
+        "tick": "4",
+        "timeNs": "20000000",
+        "setpoint": {
+          "clockEpoch": "1",
+          "sourceEpoch": "20",
+          "sequence": "4",
+          "capturedAtNs": "20000000",
+          "validUntilNs": "30000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "armPositionRad": [
+              0.2,
+              -0.15,
+              0.1,
+              -0.05,
+              0.12
+            ],
+            "gripperPosition": 0.3
+          }
+        },
+        "sensor": {
+          "clockEpoch": "1",
+          "sourceEpoch": "11",
+          "sequence": "4",
+          "capturedAtNs": "20000000",
+          "validUntilNs": "25000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "armPositionRad": [
+              0.05,
+              -0.05,
+              0.05,
+              -0.05,
+              0.05
+            ],
+            "armVelocityRadS": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "gripperPosition": 0.05,
+            "gripperVelocityPerS": 0.0
+          }
+        },
+        "safetyStatus": {
+          "clockEpoch": "1",
+          "sourceEpoch": "31",
+          "sequence": "4",
+          "capturedAtNs": "20000000",
+          "validUntilNs": "25000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "controllerState": {
+              "state": "armed",
+              "permit_epoch": "1"
+            },
+            "interlocksClear": true
+          }
+        },
+        "proposalFault": null
+      },
+      "subjectOutput": {
+        "lifecycle": {
+          "state": "running"
+        },
+        "estimate": {
+          "armPositionRad": [
+            0.05,
+            -0.05,
+            0.05,
+            -0.05,
+            0.05
+          ],
+          "armVelocityRadS": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gripperPosition": 0.05,
+          "gripperVelocityPerS": 0.0
+        },
+        "control": {
+          "clockEpoch": "1",
+          "sourceEpoch": "21",
+          "sequence": "3",
+          "sourceSensorEpoch": "11",
+          "sourceSensorSequence": "4",
+          "capturedAtNs": "20000000",
+          "validUntilNs": "25000000",
+          "command": {
+            "armPositionRad": [
+              0.2,
+              -0.15,
+              0.1,
+              -0.05,
+              0.12
+            ],
+            "gripperPosition": 0.3
+          }
+        },
+        "gate": {
+          "decision": "admitted",
+          "intent": {
+            "clockEpoch": "1",
+            "sourceEpoch": "21",
+            "sequence": "3",
+            "permitEpoch": "1",
+            "capturedAtNs": "20000000",
+            "validUntilNs": "25000000",
+            "command": {
+              "armPositionRad": [
+                0.1,
+                -0.1,
+                0.1,
+                -0.05,
+                0.1
+              ],
+              "gripperPosition": 0.1
+            }
+          },
+          "limited": true
+        }
+      },
+      "safetyDisposition": {
+        "disposition": "authorized",
+        "actuation": {
+          "tick": "4",
+          "timeNs": "20000000",
+          "permitEpoch": "1",
+          "intentSequence": "3",
+          "command": {
+            "armPositionRad": [
+              0.1,
+              -0.1,
+              0.1,
+              -0.05,
+              0.1
+            ],
+            "gripperPosition": 0.1
+          }
+        }
+      },
+      "safetyControllerAfter": {
+        "controllerState": {
+          "state": "armed",
+          "permit_epoch": "1"
+        },
+        "interlocksClear": true
+      },
+      "plantStateAfter": {
+        "armPositionRad": [
+          0.1,
+          -0.1,
+          0.1,
+          -0.05,
+          0.1
+        ],
+        "armVelocityRadS": [
+          10.0,
+          -10.0,
+          10.0,
+          0.0,
+          10.0
+        ],
+        "gripperPosition": 0.1,
+        "gripperVelocityPerS": 10.0
+      }
+    },
+    {
+      "tick": "5",
+      "timeNs": "25000000",
+      "safetyActions": [],
+      "activeFaults": [],
+      "safetyObservation": {
+        "armPositionRad": [
+          0.1,
+          -0.1,
+          0.1,
+          -0.05,
+          0.1
+        ],
+        "armVelocityRadS": [
+          10.0,
+          -10.0,
+          10.0,
+          0.0,
+          10.0
+        ],
+        "gripperPosition": 0.1,
+        "gripperVelocityPerS": 10.0
+      },
+      "subjectInput": {
+        "tick": "5",
+        "timeNs": "25000000",
+        "setpoint": {
+          "clockEpoch": "1",
+          "sourceEpoch": "20",
+          "sequence": "5",
+          "capturedAtNs": "25000000",
+          "validUntilNs": "35000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "armPositionRad": [
+              0.2,
+              -0.15,
+              0.1,
+              -0.05,
+              0.12
+            ],
+            "gripperPosition": 0.3
+          }
+        },
+        "sensor": {
+          "clockEpoch": "1",
+          "sourceEpoch": "11",
+          "sequence": "5",
+          "capturedAtNs": "25000000",
+          "validUntilNs": "30000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "armPositionRad": [
+              0.1,
+              -0.1,
+              0.1,
+              -0.05,
+              0.1
+            ],
+            "armVelocityRadS": [
+              10.0,
+              -10.0,
+              10.0,
+              0.0,
+              10.0
+            ],
+            "gripperPosition": 0.1,
+            "gripperVelocityPerS": 10.0
+          }
+        },
+        "safetyStatus": {
+          "clockEpoch": "1",
+          "sourceEpoch": "31",
+          "sequence": "5",
+          "capturedAtNs": "25000000",
+          "validUntilNs": "30000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "controllerState": {
+              "state": "armed",
+              "permit_epoch": "1"
+            },
+            "interlocksClear": true
+          }
+        },
+        "proposalFault": null
+      },
+      "subjectOutput": {
+        "lifecycle": {
+          "state": "running"
+        },
+        "estimate": {
+          "armPositionRad": [
+            0.1,
+            -0.1,
+            0.1,
+            -0.05,
+            0.1
+          ],
+          "armVelocityRadS": [
+            10.0,
+            -10.0,
+            10.0,
+            0.0,
+            10.0
+          ],
+          "gripperPosition": 0.1,
+          "gripperVelocityPerS": 10.0
+        },
+        "control": {
+          "clockEpoch": "1",
+          "sourceEpoch": "21",
+          "sequence": "4",
+          "sourceSensorEpoch": "11",
+          "sourceSensorSequence": "5",
+          "capturedAtNs": "25000000",
+          "validUntilNs": "30000000",
+          "command": {
+            "armPositionRad": [
+              0.2,
+              -0.15,
+              0.1,
+              -0.05,
+              0.12
+            ],
+            "gripperPosition": 0.3
+          }
+        },
+        "gate": {
+          "decision": "admitted",
+          "intent": {
+            "clockEpoch": "1",
+            "sourceEpoch": "21",
+            "sequence": "4",
+            "permitEpoch": "1",
+            "capturedAtNs": "25000000",
+            "validUntilNs": "30000000",
+            "command": {
+              "armPositionRad": [
+                0.15000000000000002,
+                -0.15,
+                0.1,
+                -0.05,
+                0.12
+              ],
+              "gripperPosition": 0.15000000000000002
+            }
+          },
+          "limited": true
+        }
+      },
+      "safetyDisposition": {
+        "disposition": "authorized",
+        "actuation": {
+          "tick": "5",
+          "timeNs": "25000000",
+          "permitEpoch": "1",
+          "intentSequence": "4",
+          "command": {
+            "armPositionRad": [
+              0.15000000000000002,
+              -0.15,
+              0.1,
+              -0.05,
+              0.12
+            ],
+            "gripperPosition": 0.15000000000000002
+          }
+        }
+      },
+      "safetyControllerAfter": {
+        "controllerState": {
+          "state": "armed",
+          "permit_epoch": "1"
+        },
+        "interlocksClear": true
+      },
+      "plantStateAfter": {
+        "armPositionRad": [
+          0.15000000000000002,
+          -0.15,
+          0.1,
+          -0.05,
+          0.12
+        ],
+        "armVelocityRadS": [
+          10.0,
+          -9.999999999999998,
+          0.0,
+          0.0,
+          3.999999999999998
+        ],
+        "gripperPosition": 0.15000000000000002,
+        "gripperVelocityPerS": 10.0
+      }
+    },
+    {
+      "tick": "6",
+      "timeNs": "30000000",
+      "safetyActions": [],
+      "activeFaults": [],
+      "safetyObservation": {
+        "armPositionRad": [
+          0.15000000000000002,
+          -0.15,
+          0.1,
+          -0.05,
+          0.12
+        ],
+        "armVelocityRadS": [
+          10.0,
+          -9.999999999999998,
+          0.0,
+          0.0,
+          3.999999999999998
+        ],
+        "gripperPosition": 0.15000000000000002,
+        "gripperVelocityPerS": 10.0
+      },
+      "subjectInput": {
+        "tick": "6",
+        "timeNs": "30000000",
+        "setpoint": {
+          "clockEpoch": "1",
+          "sourceEpoch": "20",
+          "sequence": "6",
+          "capturedAtNs": "30000000",
+          "validUntilNs": "40000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "armPositionRad": [
+              0.2,
+              -0.15,
+              0.1,
+              -0.05,
+              0.12
+            ],
+            "gripperPosition": 0.3
+          }
+        },
+        "sensor": {
+          "clockEpoch": "1",
+          "sourceEpoch": "11",
+          "sequence": "6",
+          "capturedAtNs": "30000000",
+          "validUntilNs": "35000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "armPositionRad": [
+              0.15000000000000002,
+              -0.15,
+              0.1,
+              -0.05,
+              0.12
+            ],
+            "armVelocityRadS": [
+              10.0,
+              -9.999999999999998,
+              0.0,
+              0.0,
+              3.999999999999998
+            ],
+            "gripperPosition": 0.15000000000000002,
+            "gripperVelocityPerS": 10.0
+          }
+        },
+        "safetyStatus": {
+          "clockEpoch": "1",
+          "sourceEpoch": "31",
+          "sequence": "6",
+          "capturedAtNs": "30000000",
+          "validUntilNs": "35000000",
+          "validity": {
+            "kind": "valid"
+          },
+          "payload": {
+            "controllerState": {
+              "state": "armed",
+              "permit_epoch": "1"
+            },
+            "interlocksClear": true
+          }
+        },
+        "proposalFault": null
+      },
+      "subjectOutput": {
+        "lifecycle": {
+          "state": "running"
+        },
+        "estimate": {
+          "armPositionRad": [
+            0.15000000000000002,
+            -0.15,
+            0.1,
+            -0.05,
+            0.12
+          ],
+          "armVelocityRadS": [
+            10.0,
+            -9.999999999999998,
+            0.0,
+            0.0,
+            3.999999999999998
+          ],
+          "gripperPosition": 0.15000000000000002,
+          "gripperVelocityPerS": 10.0
+        },
+        "control": {
+          "clockEpoch": "1",
+          "sourceEpoch": "21",
+          "sequence": "5",
+          "sourceSensorEpoch": "11",
+          "sourceSensorSequence": "6",
+          "capturedAtNs": "30000000",
+          "validUntilNs": "35000000",
+          "command": {
+            "armPositionRad": [
+              0.2,
+              -0.15,
+              0.1,
+              -0.05,
+              0.12
+            ],
+            "gripperPosition": 0.3
+          }
+        },
+        "gate": {
+          "decision": "admitted",
+          "intent": {
+            "clockEpoch": "1",
+            "sourceEpoch": "21",
+            "sequence": "5",
+            "permitEpoch": "1",
+            "capturedAtNs": "30000000",
+            "validUntilNs": "35000000",
+            "command": {
+              "armPositionRad": [
+                0.2,
+                -0.15,
+                0.1,
+                -0.05,
+                0.12
+              ],
+              "gripperPosition": 0.2
+            }
+          },
+          "limited": true
+        }
+      },
+      "safetyDisposition": {
+        "disposition": "authorized",
+        "actuation": {
+          "tick": "6",
+          "timeNs": "30000000",
+          "permitEpoch": "1",
+          "intentSequence": "5",
+          "command": {
+            "armPositionRad": [
+              0.2,
+              -0.15,
+              0.1,
+              -0.05,
+              0.12
+            ],
+            "gripperPosition": 0.2
+          }
+        }
+      },
+      "safetyControllerAfter": {
+        "controllerState": {
+          "state": "armed",
+          "permit_epoch": "1"
+        },
+        "interlocksClear": true
+      },
+      "plantStateAfter": {
+        "armPositionRad": [
+          0.2,
+          -0.15,
+          0.1,
+          -0.05,
+          0.12
+        ],
+        "armVelocityRadS": [
+          9.999999999999998,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "gripperPosition": 0.2,
+        "gripperVelocityPerS": 9.999999999999998
+      }
+    }
+  ],
+  "summary": {
+    "admittedTicks": 5,
+    "deniedByReason": {
+      "duplicate_sensor": 1,
+      "safety_not_armed": 1
+    },
+    "authorizedTicks": 4,
+    "suppressedTicks": [
+      "0",
+      "1",
+      "3"
+    ],
+    "terminalSafetyState": "armed",
+    "replayable": true
+  }
+}

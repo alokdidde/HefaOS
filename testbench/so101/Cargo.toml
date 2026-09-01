@@ -1,0 +1,21 @@
+[package]
+name = "hefaos-testbench-so101"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[features]
+default = []
+mujoco = ["dep:mujoco-rs", "mujoco-rs/auto-download-mujoco"]
+
+[dependencies]
+hefaos-testbench-contracts.workspace = true
+hefaos-testbench-harness.workspace = true
+mujoco-rs = { workspace = true, optional = true }
+sha2.workspace = true
+thiserror.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "contract": "so101-bench/v0",
+  "profile": "joint-position-loop/v0",
+  "name": "safety-status-ingress-fail-closed-matrix",
+  "modelDigest": "sha256:5ad49f2b45c083baac9ffe5d4d3213a5da7eac8039095bb2df177a697aae8308",
+  "clockEpoch": "1",
+  "sensorSourceEpoch": "11",
+  "setpointSourceEpoch": "20",
+  "subjectSourceEpoch": "21",
+  "safetySourceEpoch": "31",
+  "tickPeriodNs": "5000000",
+  "ticks": "16",
+  "seed": "0",
+  "initialState": {
+    "armPositionRad": [0.0, 0.0, 0.0, 0.0, 0.0],
+    "armVelocityRadS": [0.0, 0.0, 0.0, 0.0, 0.0],
+    "gripperPosition": 0.0,
+    "gripperVelocityPerS": 0.0
+  },
+  "setpoints": [
+    {
+      "atTick": "0",
+      "command": {
+        "armPositionRad": [0.2, -0.15, 0.1, -0.05, 0.12],
+        "gripperPosition": 0.3
+      }
+    }
+  ],
+  "safetyActions": [
+    { "atTick": "0", "action": { "action": "reset" } },
+    { "atTick": "1", "action": { "action": "arm" } }
+  ],
+  "faults": [
+    { "startTick": "2", "durationTicks": "1", "fault": { "kind": "stale_safety_status", "age_ns": "0" } },
+    { "startTick": "3", "durationTicks": "1", "fault": { "kind": "drop_safety_status" } },
+    { "startTick": "4", "durationTicks": "1", "fault": { "kind": "invalidate_safety_status", "reason": "sensor_fault" } },
+    { "startTick": "5", "durationTicks": "1", "fault": { "kind": "stale_safety_status", "age_ns": "20000000" } },
+    { "startTick": "6", "durationTicks": "1", "fault": { "kind": "duplicate_safety_status" } },
+    { "startTick": "8", "durationTicks": "1", "fault": { "kind": "reorder_safety_status" } },
+    { "startTick": "9", "durationTicks": "1", "fault": { "kind": "wrong_safety_clock_epoch" } },
+    { "startTick": "10", "durationTicks": "1", "fault": { "kind": "wrong_safety_source_epoch" } },
+    { "startTick": "11", "durationTicks": "1", "fault": { "kind": "future_safety_status", "offset_ns": "1" } },
+    { "startTick": "12", "durationTicks": "1", "fault": { "kind": "over_age_safety_status", "age_ns": "10000000" } },
+    { "startTick": "13", "durationTicks": "1", "fault": { "kind": "wrong_safety_permit_epoch" } },
+    { "startTick": "14", "durationTicks": "1", "fault": { "kind": "open_safety_interlock" } }
+  ],
+  "gatePolicy": {
+    "sensorMaxAgeNs": "10000000",
+    "safetyMaxAgeNs": "10000000",
+    "setpointMaxAgeNs": "10000000",
+    "proposalTtlNs": "10000000",
+    "maxArmStepRad": [0.05, 0.05, 0.05, 0.05, 0.05],
+    "maxGripperStep": 0.05,
+    "limits": {
+      "armPositionRad": [[-1.91986, 1.91986], [-1.7453293, 1.7453293], [-1.69, 1.69], [-1.658063, 1.658063], [-2.7438473, 2.7438473]],
+      "gripperPosition": [0.0, 1.0]
+    }
+  },
+  "safetyPolicy": {
+    "intentMaxAgeNs": "10000000",
+    "heartbeatTimeoutNs": "60000000",
+    "maxArmStepRad": [0.05, 0.05, 0.05, 0.05, 0.05],
+    "maxGripperStep": 0.05,
+    "limits": {
+      "armPositionRad": [[-1.91986, 1.91986], [-1.7453293, 1.7453293], [-1.69, 1.69], [-1.658063, 1.658063], [-2.7438473, 2.7438473]],
+      "gripperPosition": [0.0, 1.0]
+    }
+  },
+  "mockPlantPolicy": {
+    "maxArmVelocityRadS": [10.0, 10.0, 10.0, 10.0, 10.0],
+    "maxGripperVelocityPerS": 10.0
+  },
+  "equality": {
+    "controlAbsoluteTolerance": 1e-9,
+    "physicsAbsoluteTolerance": 1e-6,
+    "requireExactDiscreteTrace": true,
+    "requireBitExactMockTrace": true
+  },
+  "expected": {
+    "admittedTicks": 3,
+    "deniedByReason": {
+      "invalid_safety_status": 5,
+      "missing_safety_status": 1,
+      "permit_epoch_mismatch": 1,
+      "safety_not_armed": 1,
+      "stale_safety_status": 3,
+      "wrong_clock_epoch": 1,
+      "wrong_source_epoch": 1
+    },
+    "authorizedTicks": 2,
+    "suppressedTicks": ["0", "1", "2", "3", "4", "5", "6", "8", "9", "10", "11", "12", "13", "14"],
+    "terminalSafetyState": "armed",
+    "finalState": null
+  }
+}

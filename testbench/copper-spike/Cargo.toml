@@ -1,0 +1,31 @@
+[package]
+name = "hefaos-copper-spike"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+description = "Gate 0 direct Copper v1.1.1 testbench subject probe"
+
+[dependencies]
+anyhow.workspace = true
+cu29 = { workspace = true, features = ["log-level-warning"] }
+cu29-export.workspace = true
+cu29-unifiedlog.workspace = true
+bincode.workspace = true
+bevy_reflect.workspace = true
+hefaos-testbench-contracts.workspace = true
+hefaos-testbench-harness.workspace = true
+hefaos-testbench-reference.workspace = true
+hefaos-testbench-so101.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+
+[build-dependencies]
+cu29-build.workspace = true
+
+[lints]
+workspace = true
