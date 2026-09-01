@@ -13,7 +13,7 @@ use cu29::prelude::UnifiedLogType;
 use cu29::prelude::app::CuSimApplication;
 use cu29::prelude::memmap::{MmapSectionStorage, MmapUnifiedLoggerWrite};
 use cu29::prelude::*;
-use cu29::simulation::{CuTaskCallbackState, SimOverride};
+use cu29::simulation::{CuTaskCallbackState, SimOverride, recorded_copperlist_timestamp};
 use cu29_export::{copperlists_reader, keyframes_reader};
 use cu29_unifiedlog::{UnifiedLogger, UnifiedLoggerBuilder, UnifiedLoggerIOReader};
 use hefaos_testbench_contracts::{SubjectConfigV0, SubjectInputV0, SubjectOutputV0};
@@ -41,14 +41,33 @@ pub struct RecordedTurn {
     pub output: SubjectOutputV0,
 }
 
-/// Raw wall-clock observations from the direct Copper subject. These are
-/// characterization data only: the mock clock does not claim host pacing.
+/// Timing observations retained with Copper evidence.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TimingObservation {
+    pub source: TimingObservationSource,
     pub iterations: u64,
     pub requested_period_ns: u64,
     pub observed_intervals_ns: Vec<u64>,
     pub missed_periods: Vec<u64>,
+}
+
+/// Identifies whether timing data came from direct host instrumentation or
+/// Copper's generated rate-limited run loop.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TimingObservationSource {
+    /// One-turn `Subject` calls use a mock clock and cannot establish pacing.
+    HostOneTurnCharacterization,
+    /// Recorded `CopperList` timestamps produced while `CopperSpikeApp::run()`
+    /// exercised the generated `LoopRateLimiter`.
+    CopperRateLimitedRun,
+}
+
+/// Result of a bounded, rate-limited Copper timing execution.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PacedTimingRun {
+    pub outputs: Vec<RecordedTurn>,
+    pub timing: TimingObservation,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -302,6 +321,211 @@ pub fn run_source_injected(
     app.log_shutdown_completed()
         .map_err(|error| contextual("close recording", log_path, error))?;
     Ok(recorded)
+}
+
+/// Runs a bounded source-injected sequence through Copper's generated
+/// rate-limited `run()` loop and derives cadence and missed-list evidence from
+/// recorded `CopperList` timestamps and identifiers.
+///
+/// The callback deliberately terminates the generated loop by returning a
+/// simulated source error after every requested turn was recorded. That error
+/// is the bounded-run sentinel, not a successful control result; any other
+/// termination, missing output, missing timestamp, or count mismatch fails
+/// the evidence run closed.
+///
+/// # Errors
+///
+/// Returns an error when Copper cannot construct, pace, record, or close the
+/// graph, or when recorded `CopperList` evidence is incomplete.
+#[allow(clippy::too_many_lines)]
+pub fn run_rate_limited_source_injected(
+    config: &SubjectConfigV0,
+    inputs: &[SubjectInputV0],
+    log_path: &Path,
+) -> Result<PacedTimingRun, SubjectError> {
+    if inputs.is_empty() {
+        return Err(SubjectError::Step(
+            "Copper rate-limited timing requires at least one input".to_owned(),
+        ));
+    }
+    if log_path.exists() {
+        return Err(SubjectError::Step(format!(
+            "refusing to overwrite Copper recording {}",
+            log_path.display()
+        )));
+    }
+    let parent = log_path
+        .parent()
+        .ok_or_else(|| SubjectError::Step("Copper log path has no parent".to_owned()))?;
+    std::fs::create_dir_all(parent)
+        .map_err(|error| contextual("create timing recording directory", log_path, error))?;
+    let config_json = serde_json::to_vec(config)
+        .map_err(|error| contextual("encode timing reset config", log_path, error))?;
+    let mut startup_callback = |step: <CopperSpikeApp as CuSimApplication<
+        MmapSectionStorage,
+        MmapUnifiedLoggerWrite,
+    >>::Step<'_>|
+     -> SimOverride {
+        match step {
+            default::SimStep::Source(CuTaskCallbackState::Process((), source)) => {
+                source.clear_payload();
+                SimOverride::ExecutedBySim
+            }
+            _ => SimOverride::ExecuteByRuntime,
+        }
+    };
+    let clock = RobotClock::new();
+    let mut app = CopperSpikeApp::builder()
+        .with_clock(clock)
+        .with_log_path(log_path, LOG_SLAB_SIZE)
+        .map_err(|error| contextual("configure timing recording", log_path, error))?
+        .with_sim_callback(&mut startup_callback)
+        .build()
+        .map_err(|error| contextual("build timing graph", log_path, error))?;
+    let mut next_input = 0_usize;
+    let mut outputs = Vec::with_capacity(inputs.len());
+    let termination = {
+        let mut callback = |step: <CopperSpikeApp as CuSimApplication<
+            MmapSectionStorage,
+            MmapUnifiedLoggerWrite,
+        >>::Step<'_>|
+         -> SimOverride {
+            match step {
+                default::SimStep::Source(CuTaskCallbackState::Process((), source)) => {
+                    let Some(input) = inputs.get(next_input) else {
+                        return SimOverride::Errored("hefaos nominal timing completed".to_owned());
+                    };
+                    let turn = tasks::WireTurn {
+                        config_json: (next_input == 0).then(|| config_json.clone()),
+                        input_json: match serde_json::to_vec(input) {
+                            Ok(encoded) => encoded,
+                            Err(error) => {
+                                return SimOverride::Errored(format!(
+                                    "encode nominal timing input: {error}"
+                                ));
+                            }
+                        },
+                        fault: None,
+                    };
+                    next_input = next_input.saturating_add(1);
+                    source.set_payload(turn);
+                    SimOverride::ExecutedBySim
+                }
+                default::SimStep::Sink(CuTaskCallbackState::Process(input, _)) => {
+                    let Some(wire) = input.payload() else {
+                        return SimOverride::Errored(
+                            "nominal timing sink emitted no output".to_owned(),
+                        );
+                    };
+                    match decode_output(&wire.output_json, log_path) {
+                        Ok(output) => outputs.push(RecordedTurn { output }),
+                        Err(error) => return SimOverride::Errored(error.to_string()),
+                    }
+                    SimOverride::ExecuteByRuntime
+                }
+                _ => SimOverride::ExecuteByRuntime,
+            }
+        };
+        app.run(&mut callback)
+    };
+    drop(app);
+
+    match termination {
+        Err(error)
+            if error
+                .to_string()
+                .contains("hefaos nominal timing completed")
+                && next_input == inputs.len() => {}
+        Err(error) => return Err(contextual("run rate-limited timing graph", log_path, error)),
+        Ok(()) => {
+            return Err(SubjectError::Step(format!(
+                "Copper rate-limited timing loop ended without its bounded-run sentinel [{}]",
+                log_path.display()
+            )));
+        }
+    }
+    if next_input != inputs.len() || outputs.len() != inputs.len() {
+        return Err(SubjectError::Step(format!(
+            "Copper rate-limited timing recorded {} inputs and {} outputs, expected {} [{}]",
+            next_input,
+            outputs.len(),
+            inputs.len(),
+            log_path.display()
+        )));
+    }
+
+    let UnifiedLogger::Read(log_reader) = UnifiedLoggerBuilder::new()
+        .file_base_name(log_path)
+        .build()
+        .map_err(|error| contextual("open timing recording", log_path, error))?
+    else {
+        return Err(SubjectError::Step(format!(
+            "Copper expected readable timing recording [{}]",
+            log_path.display()
+        )));
+    };
+    let mut reader = UnifiedLoggerIOReader::new(log_reader, UnifiedLogType::CopperList);
+    let timestamps = copperlists_reader::<default::CuStampedDataSet>(&mut reader)
+        .map(|copperlist| {
+            let timestamp = recorded_copperlist_timestamp(&copperlist).ok_or_else(|| {
+                SubjectError::Step(format!(
+                    "Copper timing list {} has no recorded process timestamp [{}]",
+                    copperlist.id,
+                    log_path.display()
+                ))
+            })?;
+            Ok((copperlist.id, timestamp.as_nanos()))
+        })
+        .collect::<Result<Vec<_>, SubjectError>>()?;
+    if timestamps.len() != inputs.len() {
+        return Err(SubjectError::Step(format!(
+            "Copper timing recording contains {} CopperLists, expected {} [{}]",
+            timestamps.len(),
+            inputs.len(),
+            log_path.display()
+        )));
+    }
+    let requested_period_ns = 5_000_000_u64;
+    let mut observed_intervals_ns = Vec::with_capacity(timestamps.len().saturating_sub(1));
+    let mut missed_periods = Vec::new();
+    for window in timestamps.windows(2) {
+        let [(previous_id, previous), (current_id, current)] = window else {
+            unreachable!("window size is fixed at two");
+        };
+        let interval = current.checked_sub(*previous).ok_or_else(|| {
+            SubjectError::Step(format!(
+                "Copper timing timestamp regressed from list {previous_id} to {current_id} [{}]",
+                log_path.display()
+            ))
+        })?;
+        observed_intervals_ns.push(interval);
+        let next_expected_id = previous_id.checked_add(1).ok_or_else(|| {
+            SubjectError::Step(format!(
+                "Copper timing list identifier overflow after {previous_id} [{}]",
+                log_path.display()
+            ))
+        })?;
+        if *current_id < next_expected_id {
+            return Err(SubjectError::Step(format!(
+                "Copper timing list identifier regressed from {previous_id} to {current_id} [{}]",
+                log_path.display()
+            )));
+        }
+        // The recorded cadence may exceed the requested period without Copper
+        // dropping a list. Retain cadence in `observed_intervals_ns`; only an
+        // actual identifier gap is a missed `CopperList`.
+        missed_periods.extend(next_expected_id..*current_id);
+    }
+    Ok(PacedTimingRun {
+        outputs,
+        timing: TimingObservation {
+            source: TimingObservationSource::CopperRateLimitedRun,
+            iterations: u64::try_from(timestamps.len()).unwrap_or(u64::MAX),
+            requested_period_ns,
+            observed_intervals_ns,
+            missed_periods,
+        },
+    })
 }
 
 /// Exercise Copper's public exact-output recorded replay primitive against the
@@ -703,6 +927,7 @@ impl CopperSubject {
     #[must_use]
     pub fn timing_observation(&self) -> Option<TimingObservation> {
         self.active.as_ref().map(|active| TimingObservation {
+            source: TimingObservationSource::HostOneTurnCharacterization,
             iterations: active.turns,
             requested_period_ns: 5_000_000,
             observed_intervals_ns: active
@@ -710,13 +935,9 @@ impl CopperSubject {
                 .iter()
                 .map(|interval| u64::try_from(interval.as_nanos()).unwrap_or(u64::MAX))
                 .collect(),
-            missed_periods: active
-                .observed_intervals
-                .iter()
-                .enumerate()
-                .filter(|(_, interval)| interval.as_nanos() > 5_000_000_u128)
-                .map(|(index, _)| u64::try_from(index.saturating_add(1)).unwrap_or(u64::MAX))
-                .collect(),
+            // Direct `run_one_iteration` calls do not exercise Copper's
+            // rate-limiter, so they cannot make a Copper missed-list claim.
+            missed_periods: Vec::new(),
         })
     }
 
@@ -744,6 +965,12 @@ impl Subject for CopperSubject {
         COPPER_SUBJECT_ID
     }
     fn reset(&mut self, config: &SubjectConfigV0) -> Result<(), SubjectError> {
+        // A rejected reset must terminalize the prior graph first. Otherwise a
+        // caller could send an invalid configuration and then keep stepping
+        // under the preceding configuration.
+        self.stop_active()?;
+        self.config = None;
+        self.run_dir = None;
         // Preserve the existing Subject reset contract synchronously.
         hefaos_testbench_reference::ReferenceSubject::new()
             .reset(config)
@@ -939,18 +1166,14 @@ impl CopperSubject {
             live_segments,
             provenance: evidence_provenance(),
             timing: TimingObservation {
+                source: TimingObservationSource::HostOneTurnCharacterization,
                 iterations: turns,
                 requested_period_ns: 5_000_000,
                 observed_intervals_ns: observed_intervals
                     .iter()
                     .map(|interval| u64::try_from(interval.as_nanos()).unwrap_or(u64::MAX))
                     .collect(),
-                missed_periods: observed_intervals
-                    .iter()
-                    .enumerate()
-                    .filter(|(_, interval)| interval.as_nanos() > 5_000_000_u128)
-                    .map(|(index, _)| u64::try_from(index.saturating_add(1)).unwrap_or(u64::MAX))
-                    .collect(),
+                missed_periods: Vec::new(),
             },
             outputs,
         };
@@ -1117,5 +1340,35 @@ mod tests {
                 }
             ));
         }
+    }
+
+    #[test]
+    fn rejected_reset_terminalizes_the_prior_graph() {
+        let _guard = COPPER_APP_TEST_LOCK.lock().expect("test lock");
+        let _cwd = TestCwd::enter();
+        let scenario = scenario();
+        let mut subject = CopperSubject::new();
+        subject
+            .reset(&scenario.subject_config())
+            .expect("reset valid Copper graph");
+        let input = SubjectInputV0 {
+            tick: Tick(0),
+            time_ns: VirtualTimeNs(0),
+            setpoint: None,
+            sensor: None,
+            safety_status: None,
+            proposal_fault: None,
+        };
+        subject.step(&input).expect("old graph produces a turn");
+        let mut invalid = scenario.subject_config();
+        invalid.schema_version = invalid.schema_version.saturating_add(1);
+        assert!(
+            subject.reset(&invalid).is_err(),
+            "invalid reset is rejected"
+        );
+        assert!(
+            subject.step(&input).is_err(),
+            "a rejected reset must not leave the old graph runnable"
+        );
     }
 }

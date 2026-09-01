@@ -1,7 +1,8 @@
 use cu29::bincode::{Decode, Encode};
 use cu29::prelude::{
-    ComponentConfig, CuContext, CuError, CuMsg, CuResult, CuSinkTask, CuSrcTask, CuTask, Freezable,
-    Reflect,
+    ComponentConfig, ComponentId, CopperListView, CuComponentState, CuContext, CuError, CuMonitor,
+    CuMonitoringMetadata, CuMonitoringRuntime, CuMsg, CuResult, CuSinkTask, CuSrcTask, CuTask,
+    Decision, Freezable, Reflect,
 };
 use cu29::{input_msg, output_msg};
 use hefaos_testbench_contracts::{SubjectConfigV0, SubjectInputV0, SubjectOutputV0};
@@ -17,6 +18,31 @@ use crate::resources::RunCounter;
 pub enum CopperTaskFault {
     Error,
     Panic,
+}
+
+/// The experimental graph fails closed when a Copper task or simulated step
+/// reports an error.  This keeps a bounded timing sentinel from becoming an
+/// ignored infinite generated run, and matches the subject's terminal-fault
+/// behavior.
+pub struct FailClosedMonitor;
+
+impl CuMonitor for FailClosedMonitor {
+    fn new(_metadata: CuMonitoringMetadata, _runtime: CuMonitoringRuntime) -> CuResult<Self> {
+        Ok(Self)
+    }
+
+    fn process_copperlist(&self, _ctx: &CuContext, _view: CopperListView<'_>) -> CuResult<()> {
+        Ok(())
+    }
+
+    fn process_error(
+        &self,
+        _component_id: ComponentId,
+        _step: CuComponentState,
+        _error: &CuError,
+    ) -> Decision {
+        Decision::Shutdown
+    }
 }
 
 /// Copper-owned wire payload.  The durable testbench contract deliberately

@@ -4,9 +4,11 @@ use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context, Result, bail};
-use hefaos_copper_spike::{CopperSubject, RetainedReplayRequest, replay_retained};
-use hefaos_testbench_contracts::ScenarioV0;
-use hefaos_testbench_harness::Runner;
+use hefaos_copper_spike::{
+    CopperSubject, RetainedReplayRequest, replay_retained, run_rate_limited_source_injected,
+};
+use hefaos_testbench_contracts::{ScenarioV0, SemanticTraceV0};
+use hefaos_testbench_harness::{Runner, compare_semantic_traces};
 use hefaos_testbench_so101::MockSo101Plant;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -112,6 +114,7 @@ fn run_all() -> Result<()> {
                     outcome.verdict.failures.join("; ")
                 );
             }
+            verify_committed_golden(&entry.file, &outcome.trace)?;
             let manifest = runner
                 .into_subject()
                 .finalize(&scenario.name, &entry.sha256, &invocation_id)
@@ -153,6 +156,7 @@ fn run_all() -> Result<()> {
     Ok(())
 }
 
+#[allow(clippy::too_many_lines)]
 fn run_nominal_timing() -> Result<()> {
     let root = evidence_root();
     fs::create_dir_all(&root)?;
@@ -184,6 +188,7 @@ fn run_nominal_timing() -> Result<()> {
                 outcome.verdict.failures.join("; ")
             );
         }
+        verify_committed_golden(&entry.file, &outcome.trace)?;
         let invocation_id = format!(
             "timing-{}-{}",
             std::process::id(),
@@ -193,7 +198,51 @@ fn run_nominal_timing() -> Result<()> {
             .into_subject()
             .finalize(&scenario.name, &entry.sha256, &invocation_id)
             .map_err(|error| anyhow::anyhow!(error.to_string()))?;
-        Ok(manifest)
+        let inputs = outcome
+            .trace
+            .records
+            .iter()
+            .map(|record| record.subject_input.clone())
+            .collect::<Vec<_>>();
+        let paced_log = root.join("live_nominal.copper");
+        let paced =
+            run_rate_limited_source_injected(&scenario.subject_config(), &inputs, &paced_log)
+                .map_err(|error| anyhow::anyhow!(error.to_string()))?;
+        if paced.outputs.len() != outcome.trace.records.len() {
+            bail!(
+                "Copper rate-limited timing output count {} differs from harness trace {}",
+                paced.outputs.len(),
+                outcome.trace.records.len()
+            );
+        }
+        for (index, (recorded, expected)) in
+            paced.outputs.iter().zip(&outcome.trace.records).enumerate()
+        {
+            if recorded.output != expected.subject_output {
+                bail!(
+                    "Copper rate-limited timing output at turn {index} differs from the harness trace"
+                );
+            }
+        }
+        let timing_manifest = NominalTimingEvidence {
+            schema_version: 1,
+            scenario_name: scenario.name.clone(),
+            scenario_sha256: entry.sha256.clone(),
+            unpaced_run_manifest: manifest
+                .strip_prefix(&root)
+                .with_context(|| format!("manifest outside evidence root {}", manifest.display()))?
+                .to_path_buf(),
+            rate_limited_log: paced_log
+                .strip_prefix(&root)
+                .with_context(|| {
+                    format!("timing log outside evidence root {}", paced_log.display())
+                })?
+                .to_path_buf(),
+            timing: paced.timing,
+        };
+        let timing_manifest_path = root.join("nominal-timing-v1.json");
+        write_json(&timing_manifest_path, &timing_manifest)?;
+        Ok(timing_manifest_path)
     })();
     match result {
         Ok(manifest) => {
@@ -253,6 +302,16 @@ struct NominalTimingStatus {
     scenario_sha256: String,
     run_manifest: Option<PathBuf>,
 }
+
+#[derive(Debug, Serialize)]
+struct NominalTimingEvidence {
+    schema_version: u16,
+    scenario_name: String,
+    scenario_sha256: String,
+    unpaced_run_manifest: PathBuf,
+    rate_limited_log: PathBuf,
+    timing: hefaos_copper_spike::TimingObservation,
+}
 #[derive(Debug)]
 struct FrozenScenario {
     file: String,
@@ -278,6 +337,36 @@ fn write_nominal_timing_status(root: &Path, status: &NominalTimingStatus) -> Res
     let final_path = root.join("nominal-timing-status-v1.json");
     fs::write(&temporary, serde_json::to_vec_pretty(status)?)?;
     fs::rename(&temporary, &final_path)?;
+    Ok(())
+}
+
+fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<()> {
+    let temporary = path.with_extension("json.tmp");
+    fs::write(&temporary, serde_json::to_vec_pretty(value)?)?;
+    fs::rename(&temporary, path)?;
+    Ok(())
+}
+
+fn verify_committed_golden(scenario_file: &str, trace: &SemanticTraceV0) -> Result<()> {
+    let golden_name = scenario_file.replace(".scenario.json", ".semantic-trace.json");
+    if golden_name == scenario_file {
+        bail!("invalid frozen scenario filename {scenario_file}");
+    }
+    let golden_path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../goldens/v0")
+        .join(golden_name);
+    let golden: SemanticTraceV0 = serde_json::from_slice(
+        &fs::read(&golden_path).with_context(|| format!("read {}", golden_path.display()))?,
+    )
+    .with_context(|| format!("parse {}", golden_path.display()))?;
+    let comparison = compare_semantic_traces(&golden, trace);
+    if !comparison.equal {
+        bail!(
+            "Copper semantic trace differs from committed golden {}: {:?}",
+            golden_path.display(),
+            comparison.differences
+        );
+    }
     Ok(())
 }
 

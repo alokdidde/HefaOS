@@ -1,5 +1,8 @@
 (
     runtime: (rate_target_hz: 200),
+    monitors: [
+        (type: "crate::tasks::FailClosedMonitor"),
+    ],
     logging: (keyframe_interval: 1),
     resources: [
         (id: "run", provider: "crate::resources::RunBundle"),

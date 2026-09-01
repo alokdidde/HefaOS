@@ -46,4 +46,26 @@ fn frozen_corpus_command_retains_and_replays_all_scenarios() {
         .expect("accepted corpus manifest");
     assert!(corpus.contains("\"status\": \"accepted\""));
     assert_eq!(corpus.matches("run_manifest").count(), 12);
+
+    let timing = Command::new(binary)
+        .env("HEFAOS_COPPER_EVIDENCE_DIR", &evidence)
+        .args(["evidence", "timing-nominal"])
+        .output()
+        .expect("run nominal Copper timing command");
+    assert!(
+        timing.status.success(),
+        "timing-nominal failed:\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&timing.stdout),
+        String::from_utf8_lossy(&timing.stderr)
+    );
+    let timing_evidence = fs::read_to_string(evidence.join("nominal-timing-v1.json"))
+        .expect("rate-limited nominal timing evidence");
+    assert!(
+        timing_evidence.contains("\"source\": \"copper_rate_limited_run\""),
+        "timing evidence must identify the generated Copper run loop"
+    );
+    assert!(
+        evidence.join("live_nominal.copper").is_file(),
+        "timing evidence must retain the CopperList log"
+    );
 }
