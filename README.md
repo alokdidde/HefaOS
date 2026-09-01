@@ -1,4 +1,4 @@
-# Hefaos
+# HefaOS
 
 **Hardware-Efficient Framework for Autonomous Operating Systems**
 
@@ -47,8 +47,8 @@ hefaos/
 
 ```bash
 # Clone the repository
-git clone https://github.com/hefaos-robotics/hefaos.git
-cd hefaos
+git clone https://github.com/alokdidde/HefaOS.git
+cd HefaOS
 
 # Build C++ runtime
 cd runtime
