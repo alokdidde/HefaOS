@@ -92,6 +92,47 @@ collision-free manifest framing, nested metadata coverage, and active-marker
 mutation after eligibility scanning.
 They do not archive a bundle or change any ledger status.
 
+## Gate 0 raw-evidence admission budget
+
+`gate-0-copper-raw-v1` extends this policy with a producer-side admission check;
+it does not make a retained bundle eligible for removal. Before the Gate 0
+reproduction script creates a bundle, it scans allocated space as
+`st_blocks * 512` for regular files in **all** states below exactly
+`evidence/gate-0-copper` and `target/gate-0-copper-evidence`. A symlink,
+special node, mount crossing, unsafe destination, or configured scan bound is
+a rejection, never an ignored entry.
+
+The frozen ceiling is 4 GiB (4,294,967,296 bytes), with a 3 GiB reservation
+and a 1 GiB free-space floor. Admission requires both
+`current + reserve <= maximum` and `available >= reserve + free_floor`.
+Destinations must be new children of the managed ignored target root; the
+preflight has no overwrite or cleanup path. Its stable
+`hefaos.raw-evidence-budget-preflight.v1` JSON report records the profile,
+policy SHA-256, roots, current allocation, thresholds, free space,
+diagnostics, and verdict. An admitted bundle contains that report and
+`policy.sha256` before any build or clone begins.
+Those files are first written to a private directory anchored below the managed
+target root, then published with Linux no-replace rename semantics; an existing
+destination is never opened for provenance output. A failed staging publication
+is retained privately for review rather than removed by a pathname-based
+cleanup. Publication verifies the staging and published directory device/inode
+identity immediately around rename; a swap is a stable fail-closed rejection.
+Postflight reopens the bundle through repository-anchored no-follow directory
+descriptors and requires its admitted `preflight-report-v1.json` profile and
+policy digest to match the policy bytes it is evaluating; a changed or missing
+provenance record fails closed while retaining the bundle. It resamples free
+space after materializing its report, so a post-run free-floor crossing is
+recorded as a failure rather than hidden by the admission-time sample.
+
+The reproduction script holds a nonblocking exclusive producer lock for its
+entire workload. Its lock anchor is the repository root directory inode: on
+Linux an exclusive advisory lock on the read-only descriptor creates no ignored
+`target/evidence-maintenance` directory or lock file before a rejected
+preflight, and an atomic policy-file replacement cannot split the producer
+lock. At exit it retains the bundle and records a postflight allocation report;
+allocation over the 3 GiB reservation fails the run rather than deleting or
+overwriting evidence.
+
 ## External archive blocker
 
 The tracked receipt ledger is intentionally empty. The existing Gate 0 raw bundles

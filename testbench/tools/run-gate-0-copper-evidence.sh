@@ -11,6 +11,43 @@ readonly commands_dir="${evidence_root}/commands"
 readonly upstream_dir="${evidence_root}/upstream/copper-rs"
 readonly hefaos_runs="${evidence_root}/hefaos-runs"
 readonly nominal_timing_runs="${evidence_root}/nominal-timing"
+readonly budget_policy="${repository_root}/tools/evidence/retention-policy-v1.json"
+readonly budget_preflight="${repository_root}/tools/evidence/preflight_raw_evidence.py"
+readonly producer_lock_anchor="${repository_root}"
+
+# The repository directory inode is a stable pre-existing lock anchor: unlike
+# the policy file, it cannot be replaced by an atomic policy update. Exclusive
+# flock works on this read-only Linux directory descriptor without creating a
+# target directory or lock file before a rejected preflight.
+producer_lock_fd=''
+if ! exec {producer_lock_fd}<"${producer_lock_anchor}"; then
+    printf '%s\n' '{"accounting_roots":["evidence/gate-0-copper","target/gate-0-copper-evidence"],"available_bytes":0,"current_bytes":0,"diagnostics":[{"code":"EVIDENCE_BUDGET_PRODUCER_LOCK_UNAVAILABLE"}],"free_floor_bytes":1073741824,"maximum_bytes":4294967296,"policy_sha256":null,"profile":"gate-0-copper-raw-v1","reserve_bytes":3221225472,"schema_version":"hefaos.raw-evidence-budget-preflight.v1","verdict":"rejected"}' >&2
+    exit 2
+fi
+if ! flock -n "${producer_lock_fd}"; then
+    printf '%s\n' '{"accounting_roots":["evidence/gate-0-copper","target/gate-0-copper-evidence"],"available_bytes":0,"current_bytes":0,"diagnostics":[{"code":"EVIDENCE_BUDGET_PRODUCER_LOCKED"}],"free_floor_bytes":1073741824,"maximum_bytes":4294967296,"policy_sha256":null,"profile":"gate-0-copper-raw-v1","reserve_bytes":3221225472,"schema_version":"hefaos.raw-evidence-budget-preflight.v1","verdict":"rejected"}' >&2
+    exit 2
+fi
+
+admitted=0
+postflight() {
+    local status=$?
+    trap - EXIT
+    if [[ "${admitted}" -eq 1 ]]; then
+        if ! python3 "${budget_preflight}" --root "${repository_root}" --policy "${budget_policy}" \
+            --profile gate-0-copper-raw-v1 --destination "${evidence_root}" --postflight; then
+            status=1
+        fi
+    fi
+    exit "${status}"
+}
+trap postflight EXIT
+
+if ! python3 "${budget_preflight}" --root "${repository_root}" --policy "${budget_policy}" \
+    --profile gate-0-copper-raw-v1 --destination "${evidence_root}" --create-destination; then
+    exit 2
+fi
+admitted=1
 
 mkdir -p "${commands_dir}" "${evidence_root}/environment" "${evidence_root}/generated-config"
 failed=0

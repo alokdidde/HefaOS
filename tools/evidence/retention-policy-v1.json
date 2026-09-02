@@ -17,5 +17,16 @@
     "review_pending": "Awaiting evidence review; always retained by this tool.",
     "failed": "A failed run; recommendable only after an external archive receipt, explicit manual_recovery_eligible, and the age threshold.",
     "partial": "An incomplete run; recommendable only after an external archive receipt, explicit manual_recovery_eligible, and the age threshold."
+  },
+  "raw_evidence_budget_profiles": {
+    "gate-0-copper-raw-v1": {
+      "accounting_roots": ["evidence/gate-0-copper", "target/gate-0-copper-evidence"],
+      "maximum_bytes": 4294967296,
+      "reserve_bytes": 3221225472,
+      "free_floor_bytes": 1073741824,
+      "maximum_scan_entries": 100000,
+      "maximum_scan_depth": 64,
+      "maximum_path_bytes": 4096
+    }
   }
 }
