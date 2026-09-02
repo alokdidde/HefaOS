@@ -70,6 +70,9 @@ required upstream_revision "git -C \"${upstream_dir}\" rev-parse HEAD; git -C \"
 required upstream_run_in_sim "cd \"${upstream_dir}\" && rustup run 1.95.0 cargo run -p cu-run-in-sim"
 
 required hefaos_build "/usr/bin/time -v rustup run 1.95.0 cargo build --locked -p hefaos-copper-spike"
+required hefaos_fmt "rustup run 1.95.0 cargo fmt --all --check"
+required hefaos_clippy_workspace "rustup run 1.95.0 cargo clippy --workspace --all-targets --locked -- -D warnings"
+required hefaos_test_workspace "rustup run 1.95.0 cargo test --workspace --all-targets --locked"
 required hefaos_nominal_timing "HEFAOS_COPPER_EVIDENCE_DIR=\"${nominal_timing_runs}\" /usr/bin/time -v rustup run 1.95.0 cargo run --locked -p hefaos-copper-spike -- evidence timing-nominal"
 required nominal_timing_log_digests "find \"${nominal_timing_runs}\" -type f -print0 | sort -z | xargs -0r sha256sum"
 required nominal_timing_live_log_size "find \"${nominal_timing_runs}\" -type f -name 'live_*.copper' -printf '%s\\n' | awk '{total += \$1} END {print total + 0}'"
@@ -92,6 +95,9 @@ if ! {
     printf 'hefaos_nominal_timing_status=%s\n' "$(cat "${commands_dir}/hefaos_nominal_timing.status" 2>/dev/null || true)"
     printf 'hefaos_run_all_status=%s\n' "$(cat "${commands_dir}/hefaos_run_all.status" 2>/dev/null || true)"
     printf 'hefaos_replay_all_status=%s\n' "$(cat "${commands_dir}/hefaos_replay_all.status" 2>/dev/null || true)"
+    printf 'hefaos_fmt_status=%s\n' "$(cat "${commands_dir}/hefaos_fmt.status" 2>/dev/null || true)"
+    printf 'hefaos_clippy_workspace_status=%s\n' "$(cat "${commands_dir}/hefaos_clippy_workspace.status" 2>/dev/null || true)"
+    printf 'hefaos_test_workspace_status=%s\n' "$(cat "${commands_dir}/hefaos_test_workspace.status" 2>/dev/null || true)"
     printf '%s\n' 'iceoryx2_control_admission=rejected: bincode Vec copy and no declared queue/schema/epoch/pool policy'
 } >"${evidence_root}/verdict.txt"; then
     printf '%s\n' "error: cannot write evidence verdict" >&2
