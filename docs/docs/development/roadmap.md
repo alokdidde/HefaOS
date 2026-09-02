@@ -12,7 +12,7 @@ complete.
 |---|---|---|---|
 | v2 product and architecture boundary | Draft normative | Unassigned | Concept, specification, limitations review |
 | First robot and simulator | Accepted (Experimental virtual fixture) | HefaOS core | [Gate 0 artifact 0.2](gate-0-scope-fixture-lock.md): SO-101 mock, pinned MuJoCo identity, and fixed semantic workload; physical hazard boundary remains open |
-| First board, Linux image, kernel, firmware and cutoff | Open | Unassigned | Target profile and guarded test plan |
+| First board, Linux image, kernel, firmware and cutoff | Open | HefaOS core | Target profile and guarded test plan |
 | Copper capability spike and supported release | Partial (Experimental; raw bundle local-only) | HefaOS core | [Direct Copper acceptance](gate-0-copper-spike.md) and [raw evidence](evidence/gate-0-copper-v1.1.1-8b79968.md) for v1.1.1; durable portable provenance remains open |
 | Fixed comparison workload | Partial | HefaOS core | [Gate 0 artifact 0.2](gate-0-scope-fixture-lock.md) accepts the twelve scenarios and static 200 Hz virtual workload; the ROS comparison protocol remains open and no ROS adapter or bridge is admitted |
 | Runtime-independent verification bench | Implemented, not qualified | Unassigned | Rust contracts, invariant harness, replay traces, goldens, mock and MuJoCo adapters |

@@ -131,11 +131,13 @@ paced nominal log and matching semantic output. A different host may report
 different timing metrics without invalidating the semantic workload, but it
 cannot inherit this reference's performance characterization.
 
-The final command is opt-in and networked: it obtains the locked Menagerie
-commit in an ignored cache, verifies the model tree and all 21 execution-file
-SHA-256 values, then runs the MuJoCo test slice. A missing or mismatched model
-asset is a failure. It verifies lock consistency; it does not make MuJoCo
-hardware-equivalent or turn this host into a qualified target.
+The final command is opt-in and networked: the helper reads the repository,
+commit, model directory, tree digest, and MuJoCo version from `model.lock.toml`,
+then obtains that locked Menagerie revision in an ignored cache, verifies the
+model tree and all 21 execution-file SHA-256 values, and runs the MuJoCo test
+slice. A missing or mismatched lock value or model asset is a failure. It
+verifies lock consistency; it does not make MuJoCo hardware-equivalent or turn
+this host into a qualified target.
 
 ## Gate disposition
 

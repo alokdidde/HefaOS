@@ -2,16 +2,41 @@
 
 set -euo pipefail
 
-readonly MENAGERIE_URL="https://github.com/google-deepmind/mujoco_menagerie.git"
-readonly MENAGERIE_COMMIT="da76818e269b82289eba39808e2fb91d679d6994"
-readonly MENAGERIE_TREE="76a095b3fec789ca460f4b8ceca66d11ba96040c"
-
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repository_root="$(cd "${script_dir}/../.." && pwd)"
+model_lock="${repository_root}/testbench/so101/model.lock.toml"
+
+toml_string() {
+  local section="$1"
+  local key="$2"
+  awk -v wanted_section="${section}" -v wanted_key="${key}" '
+    $0 == "[" wanted_section "]" { in_section = 1; next }
+    /^\[/ { in_section = 0 }
+    in_section && $0 ~ "^" wanted_key " = \"" {
+      value = $0
+      sub("^" wanted_key " = \"", "", value)
+      sub("\"$", "", value)
+      print value
+      exit
+    }
+  ' "${model_lock}"
+}
+
+readonly MENAGERIE_URL="$(toml_string source repository)"
+readonly MENAGERIE_COMMIT="$(toml_string source commit)"
+readonly MENAGERIE_DIRECTORY="$(toml_string source directory)"
+readonly MENAGERIE_TREE="$(toml_string source directory_git_tree_sha1)"
+readonly MUJOCO_VERSION="$(toml_string engine mujoco_version)"
+
+if [[ -z "${MENAGERIE_URL}" || -z "${MENAGERIE_COMMIT}" || -z "${MENAGERIE_DIRECTORY}" || -z "${MENAGERIE_TREE}" || -z "${MUJOCO_VERSION}" ]]; then
+  echo "error: ${model_lock} is missing a required source or engine lock value" >&2
+  exit 1
+fi
+
 cache_root="${repository_root}/testbench/.cache"
 menagerie_dir="${cache_root}/mujoco-menagerie"
 mujoco_download_dir="${cache_root}/mujoco"
-model_dir="${menagerie_dir}/robotstudio_so101"
+model_dir="${menagerie_dir}/${MENAGERIE_DIRECTORY}"
 
 mkdir -p "${cache_root}" "${mujoco_download_dir}"
 
@@ -33,11 +58,11 @@ fi
 
 git -C "${menagerie_dir}" fetch --depth 1 origin "${MENAGERIE_COMMIT}"
 git -C "${menagerie_dir}" sparse-checkout init --cone
-git -C "${menagerie_dir}" sparse-checkout set robotstudio_so101
+git -C "${menagerie_dir}" sparse-checkout set "${MENAGERIE_DIRECTORY}"
 git -C "${menagerie_dir}" checkout --detach "${MENAGERIE_COMMIT}"
 
 actual_commit="$(git -C "${menagerie_dir}" rev-parse HEAD)"
-actual_tree="$(git -C "${menagerie_dir}" rev-parse HEAD:robotstudio_so101)"
+actual_tree="$(git -C "${menagerie_dir}" rev-parse "HEAD:${MENAGERIE_DIRECTORY}")"
 
 if [[ "${actual_commit}" != "${MENAGERIE_COMMIT}" ]]; then
   echo "error: expected Menagerie commit ${MENAGERIE_COMMIT}, got ${actual_commit}" >&2
@@ -57,7 +82,7 @@ fi
 export HEFAOS_SO101_MODEL_DIR="${model_dir}"
 export MUJOCO_DOWNLOAD_DIR="${mujoco_download_dir}"
 export MUJOCO_NO_PKG_CONFIG=1
-export LD_LIBRARY_PATH="${mujoco_download_dir}/mujoco-3.9.0/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+export LD_LIBRARY_PATH="${mujoco_download_dir}/mujoco-${MUJOCO_VERSION}/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 
 cd "${repository_root}"
 
