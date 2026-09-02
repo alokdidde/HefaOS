@@ -1,0 +1,8 @@
+{
+  "schema_version": "hefaos.evidence-state.v1",
+  "state": "failed",
+  "archive_scope": "external_verified",
+  "archive_receipt_id": "fixture-receipt",
+  "evidence_tree_sha256": "",
+  "manual_recovery_eligible": true
+}

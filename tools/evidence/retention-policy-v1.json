@@ -1,0 +1,21 @@
+{
+  "schema_version": "hefaos.evidence-retention-policy.v1",
+  "policy_id": "hefaos-development-evidence-retention-v1",
+  "scratch_relative_path": "target/evidence-maintenance",
+  "minimum_free_bytes": 67108864,
+  "evidence_roots": ["evidence"],
+  "cache_roots": ["target", "testbench/.cache", "runtime/build", "build"],
+  "state_file": ".hefaos-evidence-state.json",
+  "active_marker": ".hefaos-evidence-active",
+  "maximum_state_file_bytes": 65536,
+  "archive_receipt_ledger": "evidence/archive-receipts-v1.json",
+  "require_clean_tracked_archive_receipt_ledger": true,
+  "minimum_recommendation_age_seconds": 2592000,
+  "recommendable_states": ["failed", "partial"],
+  "states": {
+    "accepted_external_verified": "Accepted only after an externally verified immutable archive receipt; always retained by this tool.",
+    "review_pending": "Awaiting evidence review; always retained by this tool.",
+    "failed": "A failed run; recommendable only after an external archive receipt, explicit manual_recovery_eligible, and the age threshold.",
+    "partial": "An incomplete run; recommendable only after an external archive receipt, explicit manual_recovery_eligible, and the age threshold."
+  }
+}
