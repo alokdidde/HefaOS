@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "scenarios": [
+    { "file": "duplicate_sensor.scenario.json", "name": "duplicate-sensor-frame", "sha256": "dfd789b2a8c32b53f2d1b1f7b296154b8ea242f5769039f03562e79b90d4c624" },
+    { "file": "estop_latched.scenario.json", "name": "estop-is-latched", "sha256": "577044da61d063d008a2e928b3ee44278f893b42e84675f2ca9dd1af3041da64" },
+    { "file": "intent_watchdog.scenario.json", "name": "intent-heartbeat-watchdog-trips", "sha256": "69ae79f507e2b1761d36d3777d0d4895e14f5678415abc02cae97a966dd0c3b1" },
+    { "file": "nominal_tracking.scenario.json", "name": "nominal-tracking", "sha256": "02e5ec2e877d4921743be001917a838415fcdaa3a285e8ae39efcab7176e04ff" },
+    { "file": "proposal_expired.scenario.json", "name": "expired-controller-proposal", "sha256": "4ea7d98e7c0f601646eac469de1b5fb71c9a40dbb125f02d0caf0023a1fb7155" },
+    { "file": "proposal_gate_matrix.scenario.json", "name": "proposal-gate-fail-closed-matrix", "sha256": "be24bfe912de3fc1d1b64e83eff28c3b6d7f07c4b267e3445b70152a947ce3e7" },
+    { "file": "safety_ingress_matrix.scenario.json", "name": "safety-status-ingress-fail-closed-matrix", "sha256": "75d67128f2cb91c1990ef90d4202d3e37c7b69c71016a2ae3bfdd0cb60274cc5" },
+    { "file": "sensor_ingress_matrix.scenario.json", "name": "sensor-ingress-fail-closed-matrix", "sha256": "8d7b01fbc710d2bf4d58fc022bd31ce685dcaa1dbc3a831fe04460d0ba296988" },
+    { "file": "setpoint_ingress_matrix.scenario.json", "name": "setpoint-ingress-fail-closed-matrix", "sha256": "42deea68dd1c0850b364a9818b5c64fd5b95d5afe88fc206f1257d1bbfe59579" },
+    { "file": "stale_safety.scenario.json", "name": "stale-safety-feedback", "sha256": "18b3ba9fb25cebd2f97345710d78876f8a252761a03f5e3f59f7b0870e80b4dc" },
+    { "file": "subject_task_failure.scenario.json", "name": "subject-task-failure-latches-safe-state", "sha256": "28bc6a4cdb0590985b896d7eabcbea614d665539dd6f571fb5cbbe25d8b1ca4a" },
+    { "file": "trip_recovery.scenario.json", "name": "trip-requires-clear-reset-and-new-arm", "sha256": "fc94af7d05ebee904e05f1d7bf631fe160251c3f5c4c9dd5ede955a5aaeccbcd" }
+  ]
+}

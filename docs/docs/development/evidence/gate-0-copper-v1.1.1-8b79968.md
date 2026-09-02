@@ -7,8 +7,9 @@
 **Rust:** `1.95.0`
 
 The retained raw bundle is deliberately kept outside Git because it contains the
-fetched upstream checkout and is 1.8 GiB. It is linked at the repository-local
-evidence path below; the recorded tree digest identifies its reviewed contents:
+fetched upstream checkout and is 1.8 GiB. It is available only at the
+repository-local evidence path below; no clone-portable archive location has
+yet been published. The recorded tree digest identifies its reviewed contents:
 
 `evidence/gate-0-copper/20260901T000000Z-8b79968`
 
@@ -31,5 +32,9 @@ from SO-101 control admission because it uses a bincode/`Vec` copy and has no
 declared bounded queue, schema, epoch, or pool policy.
 
 This record does not qualify hardware timing, production replay, zero-copy IPC,
-or safety. Gate 0 remains incomplete pending its separate scope, target profile,
-ROS comparison, and ownership artifacts.
+or safety, and its unarchived bundle must not be represented as accepted
+clone-portable raw provenance. Its virtual scope and frozen comparison workload
+are now recorded by [Gate 0 artifact 0.2](../gate-0-scope-fixture-lock.md).
+Gate 0 remains incomplete pending the first-target plan, the ROS comparison
+protocol, the safety-controller decision, and a durable archive; a ROS bridge
+is explicitly deferred to Gate 6.

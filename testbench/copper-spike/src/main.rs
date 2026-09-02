@@ -329,11 +329,18 @@ struct NominalTimingEvidence {
     semantic_trace: SemanticTraceEvidence,
     timing: hefaos_copper_spike::TimingObservation,
 }
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 struct FrozenScenario {
     file: String,
     name: String,
     sha256: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct FrozenCorpusLock {
+    schema_version: u16,
+    scenarios: Vec<FrozenScenario>,
 }
 
 fn evidence_root() -> PathBuf {
@@ -429,32 +436,59 @@ fn verify_committed_golden(scenario_file: &str, trace: &SemanticTraceV0) -> Resu
 
 fn frozen_scenarios() -> Result<Vec<FrozenScenario>> {
     let directory = Path::new(env!("CARGO_MANIFEST_DIR")).join("../scenarios/v0");
-    let mut scenarios: Vec<_> = fs::read_dir(&directory)
+    let lock_path = directory.join("corpus.lock.json");
+    let lock: FrozenCorpusLock = serde_json::from_slice(
+        &fs::read(&lock_path).with_context(|| format!("read {}", lock_path.display()))?,
+    )
+    .with_context(|| format!("parse {}", lock_path.display()))?;
+    if lock.schema_version != 1 || lock.scenarios.len() != 12 {
+        bail!("invalid frozen scenario corpus lock shape");
+    }
+
+    let mut actual_files: Vec<_> = fs::read_dir(&directory)
         .with_context(|| format!("read {}", directory.display()))?
         .map(|entry| entry.map(|entry| entry.path()))
         .collect::<Result<_, _>>()?;
-    scenarios.retain(|path| {
-        path.extension()
-            .is_some_and(|extension| extension == "json")
+    actual_files.retain(|path| {
+        path.file_name()
+            .and_then(|name| name.to_str())
+            .is_some_and(|name| name.ends_with(".scenario.json"))
     });
-    scenarios.sort();
-    if scenarios.len() != 12 {
-        bail!("expected 12 frozen scenarios, found {}", scenarios.len());
+    actual_files.sort();
+    let actual_names = actual_files
+        .iter()
+        .map(|path| {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .context("non-utf8 scenario filename")
+                .map(str::to_owned)
+        })
+        .collect::<Result<BTreeSet<_>>>()?;
+    let lock_names = lock
+        .scenarios
+        .iter()
+        .map(|entry| entry.file.clone())
+        .collect::<BTreeSet<_>>();
+    if actual_names != lock_names || lock_names.len() != lock.scenarios.len() {
+        bail!("scenario files do not exactly match the frozen corpus lock");
     }
-    let mut frozen = Vec::with_capacity(scenarios.len());
-    for path in scenarios {
+
+    for entries in lock.scenarios.windows(2) {
+        if entries[0].file >= entries[1].file {
+            bail!("frozen scenario corpus lock is not in lexical filename order");
+        }
+    }
+    for entry in &lock.scenarios {
+        let path = directory.join(&entry.file);
         let raw = fs::read(&path).with_context(|| format!("read {}", path.display()))?;
         let scenario: ScenarioV0 =
             serde_json::from_slice(&raw).with_context(|| format!("parse {}", path.display()))?;
-        frozen.push(FrozenScenario {
-            file: path
-                .file_name()
-                .and_then(|name| name.to_str())
-                .context("non-utf8 scenario filename")?
-                .to_owned(),
-            name: scenario.name,
-            sha256: format!("{:x}", Sha256::digest(raw)),
-        });
+        if scenario.name != entry.name || format!("{:x}", Sha256::digest(raw)) != entry.sha256 {
+            bail!(
+                "scenario {} does not match the frozen corpus lock",
+                entry.file
+            );
+        }
     }
-    Ok(frozen)
+    Ok(lock.scenarios)
 }

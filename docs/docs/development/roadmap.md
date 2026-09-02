@@ -11,13 +11,13 @@ complete.
 | Decision or evidence | Status | Owner | Acceptance artifact |
 |---|---|---|---|
 | v2 product and architecture boundary | Draft normative | Unassigned | Concept, specification, limitations review |
-| First robot and simulator | Experimental fixture selected | Unassigned | SO-101 mock + pinned MuJoCo model lock; physical hazard boundary remains open |
+| First robot and simulator | Accepted (Experimental virtual fixture) | HefaOS core | [Gate 0 artifact 0.2](gate-0-scope-fixture-lock.md): SO-101 mock, pinned MuJoCo identity, and fixed semantic workload; physical hazard boundary remains open |
 | First board, Linux image, kernel, firmware and cutoff | Open | Unassigned | Target profile and guarded test plan |
-| Copper capability spike and supported release | Open | Unassigned | Direct Copper example, mapping table and pinned revision |
-| Direct Copper and ROS 2 comparison workloads | Partial | Unassigned | Twelve SO-101 scenarios are fixed; Copper and ROS adapters remain open |
+| Copper capability spike and supported release | Partial (Experimental; raw bundle local-only) | HefaOS core | [Direct Copper acceptance](gate-0-copper-spike.md) and [raw evidence](evidence/gate-0-copper-v1.1.1-8b79968.md) for v1.1.1; durable portable provenance remains open |
+| Fixed comparison workload | Partial | HefaOS core | [Gate 0 artifact 0.2](gate-0-scope-fixture-lock.md) accepts the twelve scenarios and static 200 Hz virtual workload; the ROS comparison protocol remains open and no ROS adapter or bridge is admitted |
 | Runtime-independent verification bench | Implemented, not qualified | Unassigned | Rust contracts, invariant harness, replay traces, goldens, mock and MuJoCo adapters |
 | Restricted `*.hefa.ts` frontend and IR schema | Planned; language selected | Unassigned | Gate 1 fixtures, diagnostics, canonicalization and resource-bound tests |
-| Safety-controller target and protocol | Open | Unassigned | Hazard analysis and protocol decision record |
+| Safety-controller target and protocol | Open | HefaOS core | Hazard-boundary decision naming independent controller/cutoff plus a versioned authority, epoch, sequence, TTL, integrity, reset, rollback, and failure protocol |
 | ROS 2 mode | Deferred | Unassigned | Gate 6 decision record |
 | Fleet persistence / Ignite justification | Deferred | Unassigned | Gate 8 workload evidence |
 

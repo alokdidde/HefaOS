@@ -1,6 +1,6 @@
 # Gate 0 Copper spike — frozen acceptance
 
-**Status:** Planned acceptance artifact 0.1
+**Status:** Partial (Experimental evidence; raw bundle local-only) — artifact 0.1
 **Owner:** HefaOS core
 **Decision:** Extend the transport-neutral `testbench` `Subject` boundary with a
 direct, hand-written Copper application. This is an experimental probe, not a
@@ -63,8 +63,10 @@ marked non-replayable; it is not silently retried or summarized as a pass.
 
 ## Reproduction commands
 
-The final evidence must contain the exact commands, including the upstream
-reference command and its output. The expected shape is:
+The [committed reproduction script](../../../testbench/tools/run-gate-0-copper-evidence.sh)
+regenerates a new raw bundle from a clean checkout. It does not retrieve the
+reviewed 1.8 GiB bundle, which has no durable clone-portable archive yet. The
+expected shape is:
 
 ```bash
 git clone --branch v1.1.1 https://github.com/copper-project/copper-rs.git /tmp/copper-rs
@@ -72,6 +74,11 @@ cd /tmp/copper-rs && rustup run 1.95.0 cargo run -p cu-run-in-sim
 rustup run 1.95.0 cargo run --locked -p hefaos-copper-spike -- evidence run-all
 rustup run 1.95.0 cargo run --locked -p hefaos-copper-spike -- evidence replay-all
 ```
+
+The current local evidence bundle's aggregate SHA-256 is recorded in
+[the raw evidence record](evidence/gate-0-copper-v1.1.1-8b79968.md). A stable
+archive location binding that digest, command records, and raw outputs is still
+required before artifact 0.1 can be called accepted portable provenance.
 
 ## Capability disposition
 
