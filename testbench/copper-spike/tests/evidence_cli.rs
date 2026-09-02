@@ -46,6 +46,7 @@ fn frozen_corpus_command_retains_and_replays_all_scenarios() {
         .expect("accepted corpus manifest");
     assert!(corpus.contains("\"status\": \"accepted\""));
     assert_eq!(corpus.matches("run_manifest").count(), 12);
+    assert_eq!(corpus.matches("semantic_trace").count(), 12);
 
     let timing = Command::new(binary)
         .env("HEFAOS_COPPER_EVIDENCE_DIR", &evidence)

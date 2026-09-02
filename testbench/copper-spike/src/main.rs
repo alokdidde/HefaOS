@@ -5,7 +5,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context, Result, bail};
 use hefaos_copper_spike::{
-    CopperSubject, RetainedReplayRequest, replay_retained, run_rate_limited_source_injected,
+    CopperSubject, RetainedReplayRequest, SemanticTraceEvidence, replay_retained,
+    run_rate_limited_source_injected,
 };
 use hefaos_testbench_contracts::{ScenarioV0, SemanticTraceV0};
 use hefaos_testbench_harness::{Runner, compare_semantic_traces};
@@ -115,9 +116,15 @@ fn run_all() -> Result<()> {
                 );
             }
             verify_committed_golden(&entry.file, &outcome.trace)?;
+            let semantic_trace = retain_semantic_trace(&root, &entry.file, &outcome.trace)?;
             let manifest = runner
                 .into_subject()
-                .finalize(&scenario.name, &entry.sha256, &invocation_id)
+                .finalize(
+                    &scenario.name,
+                    &entry.sha256,
+                    &invocation_id,
+                    semantic_trace.clone(),
+                )
                 .map_err(|error| anyhow::anyhow!(error.to_string()))?;
             completed.push(CorpusScenario {
                 name: scenario.name.clone(),
@@ -128,6 +135,7 @@ fn run_all() -> Result<()> {
                         format!("manifest outside evidence root {}", manifest.display())
                     })?
                     .to_path_buf(),
+                semantic_trace,
             });
             println!("{}", scenario.name);
         }
@@ -189,6 +197,7 @@ fn run_nominal_timing() -> Result<()> {
             );
         }
         verify_committed_golden(&entry.file, &outcome.trace)?;
+        let semantic_trace = retain_semantic_trace(&root, &entry.file, &outcome.trace)?;
         let invocation_id = format!(
             "timing-{}-{}",
             std::process::id(),
@@ -196,7 +205,12 @@ fn run_nominal_timing() -> Result<()> {
         );
         let manifest = runner
             .into_subject()
-            .finalize(&scenario.name, &entry.sha256, &invocation_id)
+            .finalize(
+                &scenario.name,
+                &entry.sha256,
+                &invocation_id,
+                semantic_trace.clone(),
+            )
             .map_err(|error| anyhow::anyhow!(error.to_string()))?;
         let inputs = outcome
             .trace
@@ -238,6 +252,7 @@ fn run_nominal_timing() -> Result<()> {
                     format!("timing log outside evidence root {}", paced_log.display())
                 })?
                 .to_path_buf(),
+            semantic_trace,
             timing: paced.timing,
         };
         let timing_manifest_path = root.join("nominal-timing-v1.json");
@@ -292,6 +307,7 @@ struct CorpusScenario {
     name: String,
     sha256: String,
     run_manifest: PathBuf,
+    semantic_trace: SemanticTraceEvidence,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -310,6 +326,7 @@ struct NominalTimingEvidence {
     scenario_sha256: String,
     unpaced_run_manifest: PathBuf,
     rate_limited_log: PathBuf,
+    semantic_trace: SemanticTraceEvidence,
     timing: hefaos_copper_spike::TimingObservation,
 }
 #[derive(Debug)]
@@ -341,10 +358,50 @@ fn write_nominal_timing_status(root: &Path, status: &NominalTimingStatus) -> Res
 }
 
 fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<()> {
+    let parent = path
+        .parent()
+        .context("evidence JSON path has no parent directory")?;
+    fs::create_dir_all(parent).with_context(|| format!("create {}", parent.display()))?;
     let temporary = path.with_extension("json.tmp");
     fs::write(&temporary, serde_json::to_vec_pretty(value)?)?;
     fs::rename(&temporary, path)?;
     Ok(())
+}
+
+fn retain_semantic_trace(
+    root: &Path,
+    scenario_file: &str,
+    trace: &SemanticTraceV0,
+) -> Result<SemanticTraceEvidence> {
+    let trace_name = scenario_file.replace(".scenario.json", ".semantic-trace.json");
+    if trace_name == scenario_file {
+        bail!("invalid frozen scenario filename {scenario_file}");
+    }
+    let path = root.join("semantic-traces").join(trace_name);
+    let encoded = serde_json::to_vec_pretty(trace)?;
+    let sha256 = format!("{:x}", Sha256::digest(&encoded));
+    let parent = path
+        .parent()
+        .context("semantic trace path has no parent directory")?;
+    fs::create_dir_all(parent).with_context(|| format!("create {}", parent.display()))?;
+    let temporary = path.with_extension("json.tmp");
+    fs::write(&temporary, &encoded).with_context(|| format!("write {}", temporary.display()))?;
+    fs::rename(&temporary, &path).with_context(|| format!("publish {}", path.display()))?;
+    let retained = fs::read(&path).with_context(|| format!("read {}", path.display()))?;
+    if format!("{:x}", Sha256::digest(&retained)) != sha256 {
+        bail!(
+            "semantic trace digest changed while retaining {}",
+            path.display()
+        );
+    }
+    let relative = path
+        .strip_prefix(root)
+        .with_context(|| format!("semantic trace outside evidence root {}", path.display()))?
+        .to_path_buf();
+    Ok(SemanticTraceEvidence {
+        path: relative,
+        sha256,
+    })
 }
 
 fn verify_committed_golden(scenario_file: &str, trace: &SemanticTraceV0) -> Result<()> {

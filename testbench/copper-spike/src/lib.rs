@@ -70,6 +70,14 @@ pub struct PacedTimingRun {
     pub timing: TimingObservation,
 }
 
+/// Location and digest of the exact semantic trace retained beside Copper's
+/// replay evidence.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SemanticTraceEvidence {
+    pub path: PathBuf,
+    pub sha256: String,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 struct RetainedReplayManifest {
     scenario_name: String,
@@ -81,6 +89,7 @@ struct RetainedReplayManifest {
     live_segments: Vec<RecordedLogSegment>,
     provenance: EvidenceProvenance,
     timing: TimingObservation,
+    semantic_trace: SemanticTraceEvidence,
     outputs: Vec<RecordedTurn>,
 }
 
@@ -648,6 +657,36 @@ pub fn replay_retained(requests: &[RetainedReplayRequest]) -> Result<usize, Subj
         let parent = manifest_path
             .parent()
             .ok_or_else(|| SubjectError::Step("retained manifest has no parent".to_owned()))?;
+        let evidence_root = parent.parent().ok_or_else(|| {
+            SubjectError::Step("retained manifest parent has no evidence root".to_owned())
+        })?;
+        let semantic_trace_path = evidence_root.join(&manifest.semantic_trace.path);
+        let (semantic_trace_sha256, _) = sha256_file(&semantic_trace_path)?;
+        if semantic_trace_sha256 != manifest.semantic_trace.sha256 {
+            return Err(SubjectError::Step(format!(
+                "retained semantic trace digest mismatch [{}]",
+                semantic_trace_path.display()
+            )));
+        }
+        let semantic_trace: hefaos_testbench_contracts::SemanticTraceV0 =
+            serde_json::from_slice(&std::fs::read(&semantic_trace_path).map_err(|error| {
+                contextual("read retained semantic trace", &semantic_trace_path, error)
+            })?)
+            .map_err(|error| {
+                contextual(
+                    "decode retained semantic trace",
+                    &semantic_trace_path,
+                    error,
+                )
+            })?;
+        if semantic_trace.scenario_name != request.scenario_name
+            || semantic_trace.scenario_sha256 != request.scenario_sha256
+        {
+            return Err(SubjectError::Step(format!(
+                "retained semantic trace identity does not match corpus entry [{}]",
+                semantic_trace_path.display()
+            )));
+        }
         let live = parent.join(&manifest.live_log_base);
         let segments = log_family(&live)?;
         if segments.len() != manifest.live_segments.len()
@@ -1104,6 +1143,7 @@ impl CopperSubject {
         scenario_name: &str,
         scenario_sha256: &str,
         invocation_id: &str,
+        semantic_trace: SemanticTraceEvidence,
     ) -> Result<PathBuf, SubjectError> {
         let Some(active) = self.active.take() else {
             return Err(SubjectError::Step(
@@ -1175,6 +1215,7 @@ impl CopperSubject {
                     .collect(),
                 missed_periods: Vec::new(),
             },
+            semantic_trace,
             outputs,
         };
         let manifest_path = log_path.with_file_name("manifest.json");
