@@ -276,6 +276,13 @@ The compiler MUST reject, rather than approximate silently:
 
 Backend-specific extensions are permitted only through namespaced IR fields with explicit portability impact.
 
+The planned machine-readable backend capability profiles and the planned
+`execution-backend/v1` conformance inventory are constrained by the subordinate
+[execution backend capability and conformance contract](execution-backend-contract.md).
+That contract defines the semantic inventory, evidence shape, and fail-closed
+profile rules for future schema and backend work; it does not describe an
+implemented backend profile or broaden current backend support.
+
 ## 5. Backend architecture
 
 ### 5.1 Copper backend
